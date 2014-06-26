@@ -1,3 +1,23 @@
+########################################################################################################################
+#   Copyright (C) 2014 Klaus Welch
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+########################################################################################################################
+#   Revision History
+#   Rev:  Date:     Details:
+#   0     ??.????   ???????????????????
+########################################################################################################################
 use strict;
 use warnings;
 use Carp;
@@ -5,11 +25,6 @@ use HAPCONF::util;
 
 $| = 1;
 
-########################################################################################################################
-#
-# HAPCAN Ethernet Module
-#
-########################################################################################################################
 package HAPCONF::ethernet;
 
 #=======================================================================================================================
@@ -91,30 +106,6 @@ sub get_url {
   my ($self) = @_;
   
   return $self->{"url"};
-}
-
-#=======================================================================================================================
-
-sub check {
-  my ($self) = @_;
-  my $error=0;
-  
-  
-  if (!defined($self->{"url"})) {
-    printf STDERR "ERROR : Ethernet module '%s' has undefined url.\n"
-                  ,$self->{"name"}
-                  ;
-    $error=1;
-  }
-  elsif ($self->{"url"} !~ m/^\d+\.\d+\.\d+\.\d+:\d+$/) {
-    printf STDERR "ERROR : Ethernet module '%s' has malformed url '%s'.\n"
-                  ,$self->{"name"}
-                  ,$self->{"url"}
-                  ;
-    $error=1;
-  }
-  
-  return $error;
 }
 
 # ======================================================================================================================

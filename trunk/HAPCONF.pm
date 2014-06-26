@@ -1,3 +1,23 @@
+########################################################################################################################
+#   Copyright (C) 2014 Klaus Welch
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+########################################################################################################################
+#   Revision History
+#   Rev:  Date:     Details:
+#   0     ??.????   ???????????????????
+########################################################################################################################
 package HAPCONF;
 
 use strict;
@@ -25,8 +45,6 @@ use vars qw(@ISA @EXPORT);
           ,"node"
           ,"flash_fast"
           ,"flash_full"
-          ,"show"
-          ,"image"
           ,"go_online"
           ,"trace_CAN"
           ,"go_offline"
@@ -44,8 +62,8 @@ use IO::Select;
 
 use HAPCONF::ethernet;
 use HAPCONF::button;
-use HAPCONF::ir_rx_tx;
-use HAPCONF::led_rgb;
+#use HAPCONF::ir_rx_tx;
+#use HAPCONF::led_rgb;
 use HAPCONF::relay;
 use HAPCONF::util;
 
@@ -92,7 +110,7 @@ sub new {
 
   $project = $self;  # store in global class variable...
   
-    return $self;
+  return $self;
 }
 
 #=======================================================================================================================
@@ -256,14 +274,16 @@ sub end_log {
 #=======================================================================================================================
 
 sub flash_fast {
-  my ($name) = @_;
+  my (@name) = @_;
   
-  if (!exists($project->{"node_name"}->{$name})) {
-    printf STDERR "ERROR : unknown node '%s'.\n", $name;
-    Carp::confess();
-  }
-  else {
-    $project->{"node_name"}->{$name}->flash("fast");
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      $project->{"node_name"}->{$name}->flash("fast");
+    }
   }
   
   return undef;
@@ -272,23 +292,7 @@ sub flash_fast {
 #=======================================================================================================================
 
 sub flash_full {
-  my ($name , $cmd) = @_;
-  
-  if (!exists($project->{"node_name"}->{$name})) {
-    printf STDERR "ERROR : unknown node '%s'.\n", $name;
-    Carp::confess();
-  }
-  else {
-    $project->{"node_name"}->{$name}->flash("full");
-  }
-  
-  return undef;
-}
-
-#=======================================================================================================================
-
-sub show {
-  my @name = @_;
+  my (@name) = @_;
   
   foreach my $name (@name) {
     if (!exists($project->{"node_name"}->{$name})) {
@@ -296,26 +300,10 @@ sub show {
       Carp::confess();
     }
     else {
-      $project->{"node_name"}->{$name}->show();
+      $project->{"node_name"}->{$name}->flash("full");
     }
   }
-  return undef;
-}
-
-#=======================================================================================================================
-
-sub image {
-  my @name = @_;
   
-  foreach my $name (@name) {
-    if (!exists($project->{"node_name"}->{$name})) {
-      printf STDERR "ERROR : unknown node '%s'.\n", $name;
-      Carp::confess();
-    }
-    else {
-      $project->{"node_name"}->{$name}->image();
-    }
-  }
   return undef;
 }
 
@@ -323,14 +311,6 @@ sub image {
 
 sub dump {
    print Dumper($project);
-}
-
-#=======================================================================================================================
-
-sub check {
-  foreach my $node (values %{$project->{"node_name"}}) {
-    $node->check();
-  }
 }
 
 #=======================================================================================================================
@@ -725,10 +705,6 @@ sub decode_hw_type_message {
   
   return $result;
 }
-
-#=======================================================================================================================
-
-
 
 #=======================================================================================================================
 
