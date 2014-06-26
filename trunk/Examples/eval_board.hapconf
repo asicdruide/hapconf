@@ -1,0 +1,159 @@
+#!/usr/bin/env perl
+
+use HAPCONF;
+
+#
+# the eval board has the following input switches
+#
+# led1    (2:on)       (4:on)       (6:on)
+# led2    1:2:off      3:4:off      5:6:off
+# led3    (1:on)       (3:on)       (5:on)
+# led4   
+# led5   
+# led6    (7:on)       (8:on)       (9:on)
+# led7     7:off        8:off        9:off
+# led8   
+# led9   
+# led10   10:on         11:on        12:on
+# led11   10:off        11:off       12:off
+# led12  
+# led13  
+#                       (13:on)
+#                        13:off
+# 
+# modules:
+#  * button, back box13
+#  * relay, bistable, NO
+#  * RGB LED 
+#  * IR RxTx
+#  * Ethernet
+#
+# 9 LED connected to 6 relay channels and 3 dimmer channels.
+#
+
+# create setup...
+HAPCONF->new("eval_board");
+
+
+
+
+##############################################################################
+# register and configure network nodes
+##############################################################################
+ethernet                 ("eth")
+  ->url                  ("192.168.0.100:1001")
+;                        
+                         
+button_back_box13        ("bbb")
+  ->id                   (6 , 8)
+                         # message name            event     port
+  ->port_name            ( 1   , "B1" )
+  ->port_name            ( 2   , "B2" )
+  ->port_name            ( 3   , "B3" )
+  ->port_name            ( 4   , "B4" )
+  ->port_name            ( 5   , "B5" )
+  ->port_name            ( 6   , "B6" )
+  ->port_name            ( 7   , "B7" )
+  ->port_name            ( 8   , "B8" )
+  ->port_name            ( 9   , "B9" )
+  ->port_name            (10   , "B10")
+  ->port_name            (11   , "B11")
+  ->port_name            (12   , "B12")
+  ->port_name            (13   , "B13")
+  ->message              ("1down"                , "v"     , "B1" )
+  ->message              ("1up"                  , "v"     , "B2" )
+  ->message              ("2down"                , "v"     , "B3" )
+  ->message              ("2up"                  , "v"     , "B4" )
+  ->message              ("3down"                , "v"     , "B5" )
+  ->message              ("3up"                  , "v"     , "B6" )
+  ->message              ("4up"                  , "v"     , "B7" )
+  ->message              ("5up"                  , "v"     , "B8" )
+  ->message              ("6up"                  , "v"     , "B9" )
+  ->message              ("7up"                  , "v"     , "B10")
+  ->message              ("7down"                , "^"     , "B10")
+  ->message              ("8up"                  , "v"     , "B11")
+  ->message              ("8down"                , "^"     , "B11")
+  ->message              ("9up"                  , "v"     , "B12")
+  ->message              ("9down"                , "^"     , "B12")
+  ->message              ("all_off"              , "v"     , "B13")
+  ->notes                ("configured by hapconf")
+  ->thermostat_threshold (22.0)
+  ->thermostat_hysteresis( 1.0)
+  ->temperature_offset   ( 0.0)
+;
+
+
+relay_bistable_NO        ("relay")
+  ->id                   (3 , 8)
+  ->port_name            (1    , "K1" )
+  ->port_name            (2    , "K2" )
+  ->port_name            (3    , "K3" )
+  ->port_name            (4    , "K4" )
+  ->port_name            (5    , "K5" )
+  ->port_name            (6    , "K6" )
+                         # message name            event     port
+  ->message              ("K1->on"               , "->on"  , "K1")
+  ->message              ("K1->off"              , "->off" , "K1")
+  ->message              ("K2->on"               , "->on"  , "K2")
+  ->message              ("K2->off"              , "->off" , "K2")
+  ->message              ("K3->on"               , "->on"  , "K3")
+  ->message              ("K3->off"              , "->off" , "K3")
+  ->message              ("K4->on"               , "->on"  , "K4")
+  ->message              ("K4->off"              , "->off" , "K4")
+  ->message              ("K5->on"               , "->on"  , "K5")
+  ->message              ("K5->off"              , "->off" , "K5")
+  ->message              ("K6->on"               , "->on"  , "K6")
+  ->message              ("K6->off"              , "->off" , "K6")
+                         # state      command             port list             trigger message
+  ->box                  ("enabled" , "toggle"   ,        "K1"                , "4up"  )
+  ->box                  ("enabled" , "toggle"   ,        "K2"                , "5up"  )
+  ->box                  ("enabled" , "toggle"   ,        "K3"                , "6up"  )
+                                                                              
+  ->box                  ("enabled" , "toggle"   ,        "K4"                , "7up"  )
+  ->box                  ("enabled" , "toggle"   ,        "K4"                , "7down")
+                                                                              
+  ->box                  ("enabled" , "toggle"   ,        "K5"                , "8up"  )
+  ->box                  ("enabled" , "toggle"   ,        "K5"                , "8down")
+                                                                              
+  ->box                  ("enabled" , "toggle"   ,        "K6"                , "9up"  )
+  ->box                  ("enabled" , "toggle"   ,        "K6"                , "9down")
+                                                                              
+  ->box                  ("enabled" , "turn_off" ,        "K1,K2,K3,K4,K5,K6" , "all_off")
+
+  ->box                  ("enabled" , "turn_on"  ,        "K1,K2,K3,K4,K5,K6" , "1up")
+  ->box                  ("enabled" , "turn_off#1",       "K6"                , "1up")
+  ->box                  ("enabled" , "turn_off#2",       "K5"                , "1up")
+  ->box                  ("enabled" , "turn_off#3",       "K4"                , "1up")
+  ->box                  ("enabled" , "turn_off#4",       "K3"                , "1up")
+  ->box                  ("enabled" , "turn_off#5",       "K2"                , "1up")
+  ->box                  ("enabled" , "turn_off#6",       "K1"                , "1up")
+
+;
+
+# resolve cyclic dependency between bbb and relay...
+node                     ("bbb")
+                         # state      command          port list                trigger message   group
+  ->box                  ("enabled" , "led_on"       , "B7"                   , "K1->on"                    )
+  ->box                  ("enabled" , "led_off"      , "B7"                   , "K1->off"                   )
+  ->box                  ("enabled" , "led_on"       , "B8"                   , "K2->on"                    )
+  ->box                  ("enabled" , "led_off"      , "B8"                   , "K2->off"                   )
+  ->box                  ("enabled" , "led_on"       , "B9"                   , "K3->on"                    )
+  ->box                  ("enabled" , "led_off"      , "B9"                   , "K3->off"                   )
+                         
+  #->box                  ("enabled" , "led_on"       , 12                     , "light1->on"    , "a"           )
+  #->box                  ("enabled" , "led_off"      , 12                     , "light1->off"   , "a"           )
+  #->box                  ("enabled" , "ENABLE_BOX"   , "a"                    , "light4->on"                    )
+  #->box                  ("enabled" , "DISABLE_BOX"  , "a"                    , "light4->off"                   )
+;
+
+
+
+printf "flash configuration into modules? (yN) : ";
+my $answer = <STDIN>;
+
+if ($answer =~ m/^[jJyY]$/) {
+  go_online();
+  flash_fast("bbb" , "relay");
+  go_offline();
+}
+
