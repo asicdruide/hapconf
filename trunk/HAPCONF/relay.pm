@@ -42,14 +42,6 @@ sub new {
     printf STDERR "ERROR : undefined version not allowed.\n";
     Carp::confess();
   }
-  elsif ($version !~ m/^[1234]$/) {
-    # 1: monostable CO
-    # 2: bistable   CO
-    # 3: monostable NO
-    # 4: bistable   NO
-    printf STDERR "ERROR : illegal version '%s'.\n" , $version;
-    Carp::confess();
-  }
 
   my $self = {"project"            => $project
              ,"value"              => {"name"               => $name

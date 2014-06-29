@@ -42,10 +42,6 @@ sub new {
     printf STDERR "ERROR : undefined version not allowed.\n";
     Carp::confess();
   }
-  elsif ($version !~ m/^[0123]$/) {
-    printf STDERR "ERROR : illegal version '%s'.\n" , $version;
-    Carp::confess();
-  }
 
   my $self = {"project"            => $project
              ,"value"              => {"name"                  => $name
@@ -68,7 +64,7 @@ sub new {
                                       ,"box_group"             => {}
                                       
                                       ,"thermostat_threshold"  => [0x00 , 0x00]
-                                      ,"thermostat_hysteresis" => 0x00
+                                      ,"thermostat_hysteresis" =>  0x00
                                       ,"temperature_offset"    => [0x00 , 0x00]
                                       }
                                       
@@ -85,29 +81,29 @@ sub new {
                                                                 #                             <4>- <400ms
                                                                 #                             <5>- <4s  
                                                                 #                             <6>- >4s
-                                                                "v"     => [0xFF , undef     , 0x01]  # "closed"
-                                                               ,"v="    => [0xFE , undef     , 0x02]  # "closed and held for 400ms"
-                                                               ,"v=="   => [0xFD , undef     , 0x04]  # "closed and held for 4s"
-                                                               ,"v^"    => [0xFC , undef     , 0x10]  # "closed and open within 400ms"
-                                                               ,"v=^"   => [0xFB , undef     , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"v==^"  => [0xFA , undef     , 0x40]  # "closed and open after 4s"
-                                                               ,"^"     => [0x00 , undef     , 0x08]  # "open"
+                                                                "c"     => [0xFF , undef     , 0x01]  # "closed"
+                                                               ,"c="    => [0xFE , undef     , 0x02]  # "closed and held for 400ms"
+                                                               ,"c=="   => [0xFD , undef     , 0x04]  # "closed and held for 4s"
+                                                               ,"co"    => [0xFC , undef     , 0x10]  # "closed and open within 400ms"
+                                                               ,"c=o"   => [0xFB , undef     , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,"c==o"  => [0xFA , undef     , 0x40]  # "closed and open after 4s"
+                                                               ,"o"     => [0x00 , undef     , 0x08]  # "open"
 
-                                                               ,"0v"    => [0xFF , 0x00      , 0x01]  # "closed"
-                                                               ,"0v="   => [0xFE , 0x00      , 0x02]  # "closed and held for 400ms"
-                                                               ,"0v=="  => [0xFD , 0x00      , 0x04]  # "closed and held for 4s"
-                                                               ,"0v^"   => [0xFC , 0x00      , 0x10]  # "closed and open within 400ms"
-                                                               ,"0v=^"  => [0xFB , 0x00      , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"0v==^" => [0xFA , 0x00      , 0x40]  # "closed and open after 4s"
-                                                               ,"0^"    => [0x00 , 0x00      , 0x08]  # "open"
+                                                               ,"0c"    => [0xFF , 0x00      , 0x01]  # "closed"
+                                                               ,"0c="   => [0xFE , 0x00      , 0x02]  # "closed and held for 400ms"
+                                                               ,"0c=="  => [0xFD , 0x00      , 0x04]  # "closed and held for 4s"
+                                                               ,"0co"   => [0xFC , 0x00      , 0x10]  # "closed and open within 400ms"
+                                                               ,"0c=o"  => [0xFB , 0x00      , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,"0c==o" => [0xFA , 0x00      , 0x40]  # "closed and open after 4s"
+                                                               ,"0o"    => [0x00 , 0x00      , 0x08]  # "open"
 
-                                                               ,"1v"    => [0xFF , 0xFF      , 0x01]  # "closed"
-                                                               ,"1v="   => [0xFE , 0xFF      , 0x02]  # "closed and held for 400ms"
-                                                               ,"1v=="  => [0xFD , 0xFF      , 0x04]  # "closed and held for 4s"
-                                                               ,"1v^"   => [0xFC , 0xFF      , 0x10]  # "closed and open within 400ms"
-                                                               ,"1v=^"  => [0xFB , 0xFF      , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"1v==^" => [0xFA , 0xFF      , 0x40]  # "closed and open after 4s"
-                                                               ,"1^"    => [0x00 , 0xFF      , 0x08]  # "open"
+                                                               ,"1c"    => [0xFF , 0xFF      , 0x01]  # "closed"
+                                                               ,"1c="   => [0xFE , 0xFF      , 0x02]  # "closed and held for 400ms"
+                                                               ,"1c=="  => [0xFD , 0xFF      , 0x04]  # "closed and held for 4s"
+                                                               ,"1co"   => [0xFC , 0xFF      , 0x10]  # "closed and open within 400ms"
+                                                               ,"1c=o"  => [0xFB , 0xFF      , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,"1c==o" => [0xFA , 0xFF      , 0x40]  # "closed and open after 4s"
+                                                               ,"1o"    => [0x00 , 0xFF      , 0x08]  # "open"
                                                                }
                                       
                                       ,"thermostat_event"   => {# events without LED dependency
@@ -461,9 +457,9 @@ sub thermostat_threshold {
     Carp::confess();
   }
   
-  if ($temperature < -38.8125      # -55.0 
+  if ($temperature < -55.0
       ||
-      $temperature > 124.5625 ){   # 125.0
+      $temperature > 125.0){
     printf STDERR "ERROR : illegal thermostat temperature '%s'.\n", $temperature;
     Carp::confess();
   }
@@ -585,7 +581,7 @@ sub flash {
       }
       
       if ($FWping{"AVERS"} != $self->{"value"}->{"version"}) {
-        $msg .= sprintf("ERROR : Node(%s,%s) has different version than configured (expected:%d found:%d)\n"
+        $msg .= sprintf("ERROR : Node(%s,%s) has different version than configured (configured:%d   found in module:%d)\n"
                        ,$number
                        ,$group
                        ,$self->{"value"}->{"version"}
@@ -821,17 +817,33 @@ sub decode_button_message {
 
 sub decode_temperature_message {
   my ($self, @message) = @_;
+  my $result = "";
   
-  my $temperature = (unpack "s" ,  pack "s", $message[ 8]<<8 + $message[ 9]) * 0.0625;
-  my $threshold   = (unpack "s" ,  pack "s", $message[10]<<8 + $message[11]) * 0.0625;
-  my $hysteresis  =                          $message[12]                    * 0.25;
+  my $mode = $message[ 7];
 
+  if ($mode == 0x11) {
+    # temperature frame...
+    my $temperature = (unpack "s" ,  chr($message[ 9]) . chr($message[ 8])) * 0.0625;
+    my $threshold   = (unpack "s" ,  chr($message[11]) . chr($message[10])) * 0.0625;
+    my $hysteresis  =                                        $message[12]   * 0.25;
 
-  my $result = sprintf("Temperature:%8.3f  Threshold:%8.3f  Hysteresis:%5.2f"
-                      ,$temperature
-                      ,$threshold
-                      ,$hysteresis
-                      );
+    $result = sprintf("Temperature:%8.3f  Threshold:%8.3f  Hysteresis:%5.2f"
+                     ,$temperature
+                     ,$threshold
+                     ,$hysteresis
+                     );
+  }
+  elsif ($mode == 0x12) {
+    # thermostat frame...
+    my $status = $message[8];
+    
+    my %map = (0x00 => "temperature below threshold"
+              ,0x80 => "powerup-value"
+              ,0xFF => "temperature above threshold"
+              );
+
+    $result = sprintf("Thermostat:%s" , $map{$status});
+  }
   
   return $result;
 }

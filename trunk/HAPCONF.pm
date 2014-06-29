@@ -62,8 +62,8 @@ use IO::Select;
 
 use HAPCONF::ethernet;
 use HAPCONF::button;
-#use HAPCONF::ir_rx_tx;
-#use HAPCONF::led_rgb;
+use HAPCONF::ir_rx_tx;
+use HAPCONF::led_rgb;
 use HAPCONF::relay;
 use HAPCONF::util;
 
@@ -103,6 +103,10 @@ sub new {
                                            ,0x02 => "relay, bistable, CO"
                                            ,0x03 => "relay, monostable, NO"
                                            ,0x04 => "relay, bistable, NO"
+                                           }
+                                  ,0x05 => {0x00 => "infrared receiver/transmitter"
+                                           }
+                                  ,0x08 => {0x00 => "rgb led controller"
                                            }
                                   }
              };
@@ -206,9 +210,9 @@ sub relay_bistable_NO {
 #=======================================================================================================================
 
 sub ir_rx_tx {
-  my ($name , $version) = @_;
+  my ($name) = @_;
   
-  my $ir_rx_tx = HAPCONF::ir_rx_tx->new($project , $name , $version);
+  my $ir_rx_tx = HAPCONF::ir_rx_tx->new($project , $name , 3);
   
   return $ir_rx_tx;
 }
@@ -216,9 +220,9 @@ sub ir_rx_tx {
 #=======================================================================================================================
 
 sub led_rgb {
-  my ($name , $version) = @_;
+  my ($name) = @_;
   
-  my $led_rgb = HAPCONF::led_rgb->new($project , $name , $version);
+  my $led_rgb = HAPCONF::led_rgb->new($project , $name , 0);
   
   return $led_rgb;
 }

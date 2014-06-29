@@ -1,12 +1,16 @@
 #!/usr/bin/env perl
+########################################################################################################################
+#
+# first step of bootstrapping -- find out network IDs...
+#
+########################################################################################################################
 
 use HAPCONF;
-
 
 # create setup...
 HAPCONF->new("eval_board");
 
-# first step of bootstrapping -- find out network IDs...
+# 
 ethernet            ("eth")
   ->url             ("192.168.0.100:1001")
 ;
@@ -14,10 +18,14 @@ ethernet            ("eth")
 button_back_box13   ("bbb")
 ;
 
-
 relay_bistable_NO   ("relay")
 ;
 
+led_rgb             ("led")
+;
+
+ir_rx_tx            ("IR")
+;
 
 go_online();
 scan_network(0,10 , 8,8);

@@ -15,19 +15,19 @@ ethernet            ("eth")
 button_back_box13   ("bbb")
   ->id              (6 , 8)
                     # message name            event     port
-  ->message         ("a"                    , "v"     , 1 )
-  ->message         ("b"                    , "v"     , 2 )
-  ->message         ("c"                    , "v"     , 3 )
-  ->message         ("d"                    , "v"     , 4 )
-  ->message         ("e"                    , "v"     , 5 )
-  ->message         ("f"                    , "v"     , 6 )
-  ->message         ("g"                    , "v"     , 7 )
-  ->message         ("h"                    , "v"     , 8 )
-  ->message         ("i"                    , "v"     , 9 )
-  ->message         ("j"                    , "v"     , 10)
-  ->message         ("k"                    , "v"     , 11)
-  ->message         ("l"                    , "v"     , 12)
-  ->message         ("m"                    , "v"     , 13)
+  ->message         ("a"                    , "c"     , 1 )
+  ->message         ("b"                    , "c"     , 2 )
+  ->message         ("c"                    , "c"     , 3 )
+  ->message         ("d"                    , "c"     , 4 )
+  ->message         ("e"                    , "c"     , 5 )
+  ->message         ("f"                    , "c"     , 6 )
+  ->message         ("g"                    , "c"     , 7 )
+  ->message         ("h"                    , "c"     , 8 )
+  ->message         ("i"                    , "c"     , 9 )
+  ->message         ("j"                    , "c"     , 10)
+  ->message         ("k"                    , "c"     , 11)
+  ->message         ("l"                    , "c"     , 12)
+  ->message         ("m"                    , "c"     , 13)
 ;
 
 
@@ -35,6 +35,13 @@ relay_bistable_NO   ("relay")
   ->id              (3 , 8)
 ;
 
+ir_rx_tx            ("IR")
+  ->id              (5 , 8)
+;
+
+led_rgb             ("dimmer")
+  ->id              (4 , 8)
+;
 
 go_online();
 
