@@ -1,0 +1,38 @@
+#!/usr/bin/env perl
+
+use HAPCONF;
+
+
+# create setup...
+my $project = HAPCONF->new("eval_board");
+
+begin_log("TxCAN" , "RxCAN");
+
+
+ethernet            ("eth")
+  ->url             ("192.168.0.100:1001")
+;
+
+button_back_box13   ("bbb")
+  ->id              (6 , 8)
+;
+
+
+relay_bistable_NO   ("relay")
+  ->id              (3 , 8)
+;
+
+led_rgb             ("led")
+  ->id              (4 , 8)
+;
+
+ir_rx_tx            ("IR")
+  ->id              (5 , 8)
+;
+
+
+go_online();
+trace_CAN();
+go_offline();
+
+

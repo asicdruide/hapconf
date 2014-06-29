@@ -1,0 +1,125 @@
+#!/usr/bin/env perl
+########################################################################################################################
+#
+# test different dimmer UIs
+#
+########################################################################################################################
+
+use HAPCONF;
+
+# create setup...
+my $project = HAPCONF->new("eval_board");
+
+#begin_log("TxCAN" , "RxCAN");
+
+
+ethernet                 ("eth")
+  ->url                  ("192.168.0.100:1001")
+;                        
+                         
+button_back_box13        ("bbb")
+  ->id                   (6 , 8)
+                         # message name            event     port
+  # UI1 : up-down button
+  ->message              ("dim_down"             , "c"     , 1 )
+  ->message              ("dim_up"               , "c"     , 2 )
+  
+  # UI2 :  single button
+  ->message              ("dim_start"            , "c"     , 7 )
+  ->message              ("dim_stop"             , "o"     , 7 )
+  
+  # UI3 : attached to switch (different value dependinng on time-of-day)...
+  ->message              ("dim_on"               , "c"     , 10 )
+  ->message              ("dim_off"              , "o"     , 10 )
+  
+  # switches between day and night...
+  ->message              ("day"                  , "c"     , 12 )
+  ->message              ("night"                , "o"     , 12 )
+
+  # a central off button...
+  ->message              ("all_off"              , "c"     , 13)
+
+  # feedback for day/night...
+  ->box                  ("enabled" , "led_on"   , 8      , "day"                    )
+  ->box                  ("enabled" , "led_off"  , 8      , "night"                  )
+
+  ->notes                ("configured by hapconf")
+  ->thermostat_threshold (22.0)
+  ->thermostat_hysteresis( 1.0)
+  ->temperature_offset   ( 0.0)
+;
+
+ir_rx_tx                 ("IR")
+  ->id                   (5 , 8)
+  ->message              ("dim_startIR"          , "RC5-0-1-begin")
+  ->message              ("dim_stopIR"           , "RC5-0-1-end"  )
+;
+
+# not really needed for dimmer test scenarios...
+relay_bistable_NO        ("relay")
+  ->id                   (3 , 8)
+                         # state      command             port list             trigger message
+  ->box                  ("enabled" , "turn_off" ,        "1,2,3,4,5,6" , "all_off")
+;
+
+
+
+
+led_rgb                  ("dimmer")
+  ->id                   (4 , 8)
+  ->port_name            ( 1   , "R" )
+  ->port_name            ( 2   , "G" )
+  ->port_name            ( 3   , "B" )
+  ->port_name            ( 4   , "M" )
+  ->dimming_time         ("R" , 5)
+  ->dimming_time         ("G" , 3)
+  ->dimming_time         ("B" , 5)
+  ->powerup_value        ("R" , 0)
+  ->powerup_value        ("G" , 0)
+  ->powerup_value        ("B" , 0)
+  ->powerup_value        ("M" , 0xFF)          # on, dimm commands should have immediate effect...
+  ->state_memory         ("R" , "yes")
+  ->state_memory         ("G" , "yes")
+  ->state_memory         ("B" , "yes")
+  ->state_memory         ("M" , "no" )
+
+  # UI1 : up-down button
+  ->box                  ("enabled" , "R+=16"                                 , "dim_up"                    )
+  ->box                  ("enabled" , "R-=16"                                 , "dim_down"                  )
+                                                                                                            
+  # UI2 :  single button                                                                                    
+  ->box                  ("enabled" , "start_G"                               , "dim_start"                 )
+  ->box                  ("enabled" , "stop_G"                                , "dim_stop"                  )
+  ->box                  ("enabled" , "start_G"                               , "dim_startIR"               )
+  ->box                  ("enabled" , "stop_G"                                , "dim_stopIR"                )
+                                                                                                            
+  # UI3 : attached to switch (different value depending on time-of-day)...                                 
+  ->box                  ("disabled", "B=255"                                 , "dim_on"     , "group_day"  )
+  ->box                  ("disabled", "B=0"                                   , "dim_off"    , "group_day"  )
+  ->box                  ("enabled" , "B~16"                                  , "dim_on"     , "group_night")
+  ->box                  ("enabled" , "B~0"                                   , "dim_off"    , "group_night")
+
+  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_day"             , "day"                       )
+  ->box                  ("enabled" , "DISABLE_BOX" , "group_night"           , "day"                       )
+  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_night"           , "night"                     )
+  ->box                  ("enabled" , "DISABLE_BOX" , "group_day"             , "night"                     )
+                                                                                                           
+  # central off-switch...                                 
+  ->box                  ("enabled" , "R=0"                                   , "all_off"                   )
+  ->box                  ("enabled" , "G=0"                                   , "all_off"                   )
+  ->box                  ("enabled" , "B=0"                                   , "all_off"                   )
+;
+
+printf "flash configuration into modules? (yN) : ";
+my $answer = <STDIN>;
+
+if ($answer =~ m/^[jJyY]$/) {
+  go_online();
+  #flash_fast("bbb");
+  #flash_fast("relay");
+  flash_fast("dimmer");
+  go_offline();
+}
+
+
+
