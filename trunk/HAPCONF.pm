@@ -45,13 +45,20 @@ use vars qw(@ISA @EXPORT);
           ,"node"
           ,"flash_fast"
           ,"flash_full"
-          ,"go_online"
+          ,"connect"
           ,"trace_CAN"
-          ,"go_offline"
+          ,"disconnect"
           ,"scan_network"
           ,"new_scan_network"
           ,"begin_log"
           ,"end_log"
+          ,"exit_programming_mode"
+          ,"reboot"
+          ,"supply_voltage"
+          ,"health_check"
+          ,"device_id"
+          ,"uptime"
+          ,"status"
           );
 
 
@@ -113,7 +120,7 @@ sub new {
   bless($self , $class);
 
   $project = $self;  # store in global class variable...
-  
+
   return $self;
 }
 
@@ -123,7 +130,7 @@ sub ethernet {
   my ($name) = @_;
 
   my $ethernet = HAPCONF::ethernet->new($project , $name);
-  
+
   return $ethernet;
 }
 
@@ -131,9 +138,9 @@ sub ethernet {
 
 sub button_DIN_rail8 {
   my ($name) = @_;
-  
+
   my $back_box_button = HAPCONF::button->new($project , $name , 0);
-  
+
   return $back_box_button;
 }
 
@@ -141,9 +148,9 @@ sub button_DIN_rail8 {
 
 sub button_back_box13 {
   my ($name) = @_;
-  
+
   my $back_box_button = HAPCONF::button->new($project , $name , 1);
-  
+
   return $back_box_button;
 }
 
@@ -151,9 +158,9 @@ sub button_back_box13 {
 
 sub button_back_box6touch {
   my ($name) = @_;
-  
+
   my $back_box_button = HAPCONF::button->new($project , $name , 2);
-  
+
   return $back_box_button;
 }
 
@@ -161,9 +168,9 @@ sub button_back_box6touch {
 
 sub button_back_box14 {
   my ($name) = @_;
-  
+
   my $back_box_button = HAPCONF::button->new($project , $name , 3);
-  
+
   return $back_box_button;
 }
 
@@ -173,7 +180,7 @@ sub relay_monostable_CO {
   my ($name) = @_;
 
   my $bistable_relay = HAPCONF::relay->new($project , $name , 1);
-  
+
   return $bistable_relay;
 }
 
@@ -183,7 +190,7 @@ sub relay_bistable_CO {
   my ($name) = @_;
 
   my $bistable_relay = HAPCONF::relay->new($project , $name , 2);
-  
+
   return $bistable_relay;
 }
 
@@ -193,7 +200,7 @@ sub relay_monostable_NO {
   my ($name) = @_;
 
   my $bistable_relay = HAPCONF::relay->new($project , $name , 3);
-  
+
   return $bistable_relay;
 }
 
@@ -203,7 +210,7 @@ sub relay_bistable_NO {
   my ($name) = @_;
 
   my $bistable_relay = HAPCONF::relay->new($project , $name , 4);
-  
+
   return $bistable_relay;
 }
 
@@ -211,9 +218,9 @@ sub relay_bistable_NO {
 
 sub ir_rx_tx {
   my ($name) = @_;
-  
+
   my $ir_rx_tx = HAPCONF::ir_rx_tx->new($project , $name , 3);
-  
+
   return $ir_rx_tx;
 }
 
@@ -221,9 +228,9 @@ sub ir_rx_tx {
 
 sub led_rgb {
   my ($name) = @_;
-  
+
   my $led_rgb = HAPCONF::led_rgb->new($project , $name , 0);
-  
+
   return $led_rgb;
 }
 
@@ -231,7 +238,7 @@ sub led_rgb {
 
 sub node {
   my ($name) = @_;
-  
+
   if (!exists($project->{"node_name"}->{$name})) {
     printf STDERR "ERROR : unknown node '%s'.\n", $name;
     Carp::confess();
@@ -245,7 +252,7 @@ sub node {
 
 sub begin_log {
   my (@flag) = @_;
-  
+
   foreach my $flag (@flag) {
     if (exists($project->{"log"}->{$flag})) {
                $project->{"log"}->{$flag} = 1;
@@ -254,7 +261,7 @@ sub begin_log {
       printf STDERR "ERROR : unknown log flag '%s'.\n", $flag;
     }
   }
-  
+
   return undef;
 }
 
@@ -262,7 +269,7 @@ sub begin_log {
 
 sub end_log {
   my (@flag) = @_;
-  
+
   foreach my $flag (@flag) {
     if (exists($project->{"log"}->{$flag})) {
                $project->{"log"}->{$flag} = 0;
@@ -271,7 +278,7 @@ sub end_log {
       printf STDERR "ERROR : unknown log flag '%s'.\n", $flag;
     }
   }
-  
+
   return undef;
 }
 
@@ -279,7 +286,7 @@ sub end_log {
 
 sub flash_fast {
   my (@name) = @_;
-  
+
   foreach my $name (@name) {
     if (!exists($project->{"node_name"}->{$name})) {
       printf STDERR "ERROR : unknown node '%s'.\n", $name;
@@ -289,7 +296,7 @@ sub flash_fast {
       $project->{"node_name"}->{$name}->flash("fast");
     }
   }
-  
+
   return undef;
 }
 
@@ -297,7 +304,7 @@ sub flash_fast {
 
 sub flash_full {
   my (@name) = @_;
-  
+
   foreach my $name (@name) {
     if (!exists($project->{"node_name"}->{$name})) {
       printf STDERR "ERROR : unknown node '%s'.\n", $name;
@@ -307,7 +314,204 @@ sub flash_full {
       $project->{"node_name"}->{$name}->flash("full");
     }
   }
-  
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub exit_programming_mode {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      HAPCONF::util::one_node_exit_programming_mode($project , $number , $group);
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub reboot {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      HAPCONF::util::one_node_reboot($project , $number , $group);
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub supply_voltage {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      my %result = HAPCONF::util::one_node_supply_voltage($project , $number , $group);
+
+      if ($result{"msg"} eq "pass") {
+        printf STDERR "%-16s (%2d : %2d) bus voltage : %5.2f\n", $name, $number , $group, $result{"bus_voltage"};
+        printf STDERR "%-16s (%2d : %2d) cpu voltage : %5.2f\n", $name, $number , $group, $result{"cpu_voltage"};
+      }
+      else {
+        printf STDERR "%s\n", $result{"msg"};
+        Carp::confess();
+      }
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub health_check {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      my %result = HAPCONF::util::one_node_health_check($project , $number , $group);
+
+      if ($result{"msg"} eq "pass") {
+        printf STDERR "%-16s (%2d : %2d) RXCNT/MX/MXE:%2d/%2d/%2d\n"
+                      ,$name
+                      ,$number,$group
+                      ,$result{"RXCNT"}
+                      ,$result{"RXCNTMX"}
+                      ,$result{"RXCNTMXE"}
+                      ;
+        printf STDERR "%-16s (%2d : %2d) TXCNT/MX/MXE:%2d/%2d/%2d\n"
+                      ,$name
+                      ,$number,$group
+                      ,$result{"TXCNT"}
+                      ,$result{"TXCNTMX"}
+                      ,$result{"TXCNTMXE"}
+                      ;
+        printf STDERR "%-16s (%2d : %2d) RXERRCNT/E:%2d/%2d TXERRCNT/E:%2d/%2d CANINTCNT/E:%2d/%2d\n"
+                      ,$name
+                      ,$number,$group
+                      ,$result{"RXERRCNT"}
+                      ,$result{"RXERRCNTE"}
+                      ,$result{"TXERRCNT"}
+                      ,$result{"TXERRCNTE"}
+                      ,$result{"CANINTCNT"}
+                      ,$result{"CANINTCNTE"}
+                      ;
+      }
+      else {
+        printf STDERR "%s\n", $result{"msg"};
+        Carp::confess();
+      }
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub device_id {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      my %result = HAPCONF::util::one_node_device_id($project , $number , $group);
+
+      if ($result{"msg"} eq "pass") {
+        printf STDERR "%-16s (%2d : %2d) 0x%04X\n", $name, $number , $group, $result{"dev_id"};
+      }
+      else {
+        printf STDERR "%s\n", $result{"msg"};
+        Carp::confess();
+      }
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub uptime {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      my %result = HAPCONF::util::one_node_uptime($project , $number , $group);
+
+      if ($result{"msg"} eq "pass") {
+        printf STDERR "%-16s (%2d : %2d) %s\n", $name, $number , $group, $result{"nice"};
+      }
+      else {
+        printf STDERR "%s\n", $result{"msg"};
+        Carp::confess();
+      }
+    }
+  }
+
+  return undef;
+}
+
+#=======================================================================================================================
+
+sub status {
+  my (@name) = @_;
+
+  foreach my $name (@name) {
+    if (!exists($project->{"node_name"}->{$name})) {
+      printf STDERR "ERROR : unknown node '%s'.\n", $name;
+      Carp::confess();
+    }
+    else {
+      my ($number , $group) = $project->{"node_name"}->{$name}->get_id();
+
+      my %result = HAPCONF::util::one_node_status($project , $number , $group);
+
+    }
+  }
+
   return undef;
 }
 
@@ -321,19 +525,19 @@ sub dump {
 
 sub add_node {
   my ($project , $node_name , $node_ref) = @_;
-  
+
   if (exists($project->{"node_name"}->{$node_name})) {
     printf STDERR "ERROR : node name '%s' is not unique\n", $node_name;
     Carp::confess();
   }
   else {
     $project->{"node_name"}->{$node_name} = $node_ref;
-    
+
     if (ref($node_ref) eq "HAPCONF::ethernet") {
       $project->{"if"} = $node_ref;
     }
   }
-  
+
   return undef;
 }
 
@@ -341,7 +545,7 @@ sub add_node {
 
 sub set_node_id {
   my ($project , $node_name , $node_number , $node_group) = @_;
-  
+
   my $node_id = $node_number.",".$node_group;
 
   if (!exists($project->{"node_name"}->{$node_name})) {
@@ -353,9 +557,9 @@ sub set_node_id {
     Carp::confess();
   }
   else {
-    $project->{"node_id"}->{$node_id} = $project->{"node_name"}->{$node_name};
+    $project->{"node_id"}->{$node_id} = $node_name;
   }
-  
+
   return undef;
 }
 
@@ -363,7 +567,7 @@ sub set_node_id {
 
 sub add_message {
   my ($project , $name , @message) = @_;
-  
+
   if (exists($project->{"message"}->{$name})) {
     printf STDERR "ERROR : message '%s' is not unique\n", $name;
     Carp::confess();
@@ -371,7 +575,7 @@ sub add_message {
   else {
     $project->{"message"}->{$name} = [@message];
   }
-  
+
   return undef;
 }
 
@@ -379,7 +583,7 @@ sub add_message {
 
 sub get_message {
   my ($project , $name) = @_;
-  
+
   if (!exists($project->{"message"}->{$name})) {
     printf STDERR "ERROR : unknown message '%s'.\n", $name;
     Carp::confess();
@@ -390,16 +594,16 @@ sub get_message {
 
 #=======================================================================================================================
 
-sub go_online {
+sub connect {
   if (!defined($project->{"if"})) {
     printf STDERR "ERROR : no ethernet interface defined, yet.\n";
     Carp::confess();
   }
-  
+
   my  $if_url = $project->{"if"}->get_url();
-  
+
   my $socket;
-  
+
   if ($socket = IO::Socket::INET->new(PeerAddr    => $if_url
                                      ,Proto       => 'tcp'
                                      ,Type        => SOCK_STREAM
@@ -418,28 +622,29 @@ sub go_online {
   my $select = IO::Select->new();
 
   $select->add($socket);
-  
+
   $project->{"socket"} = $socket;
   $project->{"select"} = $select;
-  
+
   return undef;
 }
 
 #=======================================================================================================================
 
 sub scan_network {
-  my ($n_min , $n_max , $g_min , $g_max) = @_;
-  
+  my ($n_min , $n_max , $g_min , $g_max , $timeout) = @_;
+
   my $n = 0;
-  
+
   my $sep = "";
-  
+
   foreach   my $group  (($g_min & 0xFF)..($g_max & 0xFF)) {
+    printf "\ngroup:%d" , $group;
     foreach my $number (($n_min & 0xFF)..($n_max & 0xFF)) {
-      my %HWping = HAPCONF::util::HWping($project ,$number , $group);
+      my %HWping = HAPCONF::util::HWping($project ,$number , $group , $timeout);
 
       if ($HWping{"msg"} eq "pass") {
-        my %FWping = HAPCONF::util::FWping($project ,$number , $group);
+        my %FWping = HAPCONF::util::FWping($project ,$number , $group , $timeout);
 
         printf "%sfound node at (%s,%s)\n"
                ,$sep
@@ -451,7 +656,7 @@ sub scan_network {
                ,$HWping{"HVER"}
                ,$HWping{"ID"}
         ;
-        
+
         if ($FWping{"msg"} eq "pass") {
           printf "  ATYPE=0x%02X AVERS=0x%02X FVERS=0x%02X BVER=0x%04X\n  %s\n"
                  ,$FWping{"ATYPE"}
@@ -463,7 +668,7 @@ sub scan_network {
         }
 
         $sep = "";
-        
+
         $n += 1;
       }
       else {
@@ -474,7 +679,7 @@ sub scan_network {
   }
 
   printf "\n%d nodes found\n",$n;
-  
+
   return undef;
 }
 
@@ -482,10 +687,10 @@ sub scan_network {
 
 sub new_scan_network {
   my ($n_min , $n_max , $g_min , $g_max) = @_;
-  
+
   my @ping;
   my $n = 0;
-  
+
   foreach   my $group  (($g_min & 0xFF)..($g_max & 0xFF)) {
     foreach my $number (($n_min & 0xFF)..($n_max & 0xFF)) {
       push(@ping , [$number , $group]);
@@ -498,10 +703,10 @@ sub new_scan_network {
 
   while (scalar(@ping) > 0) {
     my $pinged = 0;
-    
+
     while (scalar(@ping) > 0 && $pinged < 1) {
       my ($number , $group) = @{shift(@ping)};
-      
+
       HAPCONF::util::Tx($project
         ,"ping"
         ,0x10    , 0x40    # hw type request
@@ -514,7 +719,7 @@ sub new_scan_network {
       #Time::HiRes::usleep(50000);
       $pinged += 1;
     }
-    
+
     # check answers...
     my @can_read = $select->can_read($timeout);
     my $rx;
@@ -522,7 +727,7 @@ sub new_scan_network {
     while (scalar(@can_read) > 0) {
       foreach my $can_read (@can_read) {
         $can_read->read($rx , 15);
-        
+
         my @rx_byte = map {ord(substr($rx , $_ , 1))} (0..14);
 
         # tbd: check CHKSUM...
@@ -534,8 +739,8 @@ sub new_scan_network {
           my $group  = $rx_byte[4];
           my $HARD   = $rx_byte[5]<<8  | $rx_byte[6];
           my $HVER   = $rx_byte[7];
-          my $ID     = $rx_byte[9]<<24 | $rx_byte[10]<<16 | $rx_byte[11]<<8 | $rx_byte[12]; 
-      
+          my $ID     = $rx_byte[9]<<24 | $rx_byte[10]<<16 | $rx_byte[11]<<8 | $rx_byte[12];
+
           printf "found node at (%s,%s) : HARD=0x%04X HVER=0x%02X ID=0x%08X\n"
                  ,$number
                  ,$group
@@ -544,7 +749,7 @@ sub new_scan_network {
                  ,$ID
           ;
           $n += 1;
-        } 
+        }
       }
 
       @can_read = $select->can_read($timeout);
@@ -552,7 +757,7 @@ sub new_scan_network {
   }
 
   printf "\n%d nodes found\n",$n;
-  
+
   return undef;
 }
 
@@ -560,11 +765,11 @@ sub new_scan_network {
 
 sub trace_CAN {
   my ($timeout) = @_;
-  
+
   if (!defined($timeout)) {
     $timeout = 30;
   }
-  
+
   if (defined($project->{"socket"})) {
     printf STDERR "INFO : stop tracing after %d seconds of inactivity\n", $timeout;
     HAPCONF::util::RxFlush($project , $timeout);
@@ -572,27 +777,27 @@ sub trace_CAN {
   else {
     printf STDERR "ERROR : not online.\n";
   }
-  
+
   return undef;
 }
 
 #=======================================================================================================================
 
-sub go_offline {
+sub disconnect {
   if (defined($project->{"socket"})) {
     $project->{"select"}->remove($project->{"socket"});
     $project->{"socket"}->close();
-    
+
     $project->{"select"} = undef;
     $project->{"socket"} = undef;
-    
+
     printf STDERR "INFO : disconnected.\n";
 
   }
   else {
     printf STDERR "ERROR : not online.\n";
   }
-  
+
   return undef;
 }
 
@@ -601,7 +806,7 @@ sub go_offline {
 sub decode_type {
   my ($project , $ATYPE , $AVERS) = @_;
   my $result = "";
-  
+
   if (exists( $project->{"node_type"}->{$ATYPE})
       &&
       exists( $project->{"node_type"}->{$ATYPE}->{$AVERS})) {
@@ -618,11 +823,11 @@ sub decode_type {
 
 sub decode_message {
   my ($project , @message) = @_;
-  
+
   if (scalar(@message)!=15) {
     return sprintf("Error : wrong frame length, '%s' is not 15\n",scalar(@message));
   }
-  
+
   if ($message[0] != 0xAA) {
     return sprintf("Error : wrong start byte, '0x%02X' is not 0xAA\n",$message[0]);
   }
@@ -634,9 +839,9 @@ sub decode_message {
   my $chksum = 0;
 
   map {$chksum += $_} @message[1..12];
-  
+
   $chksum = $chksum & 0xFF;
-  
+
   if ($message[13] != $chksum) {
     return sprintf("Error : wrong chksum, '0x%02X' is not 0x%02X\n",$message[13] , $chksum);
   }
@@ -654,13 +859,29 @@ sub decode_message {
   else {
     $result = " rsp ";
   }
-  
-  $result .= sprintf("(%02X,%02X) ", $number , $group);
-  
-  foreach my $name (keys %{$project->{"node_name"}}) {
-    my $part = $project->{"node_name"}->{$name}->message_decoder(@message);
+
+  my $node_id   = $number.",".$group;
+  my $node_name = "???";
+
+  if (exists(    $project->{"node_id"}->{$node_id})) {
+    $node_name = $project->{"node_id"}->{$node_id};
+  }
+
+  $result .= sprintf("(%02X,%02X) %-16s", $number , $group, $node_name);
+
+  # decode generic messages...
+  $result .= message_decoder($project , @message);
+
+  # decode node specific messages...
+  if (exists(  $project->{"node_name"}->{$node_name})) {
+    my $part = $project->{"node_name"}->{$node_name}->message_decoder(@message);
     $result .= $part;
   }
+
+  #foreach my $name (keys %{$project->{"node_name"}}) {
+  #  my $part = $project->{"node_name"}->{$name}->message_decoder(@message);
+  #  $result .= $part;
+  #}
 
   return $result;
 }
@@ -668,45 +889,18 @@ sub decode_message {
 # ======================================================================================================================
 
 sub message_decoder {
-  my ($self , $frame_type , $response_flag , @byte) = @_;
-  
-  my $result = "";
-  
-  if    ($frame_type == 0x104) {$result = $self->decode_hw_type_message(@byte)}
+  my ($self , @message) = @_;
 
-  return $result;
-}
-
-# ======================================================================================================================
-
-sub decode_hw_type_message {
-  my ($self, @byte) = @_;
+  my %result;
   my $result = "";
 
-  $result = sprintf("(%02X,%02X) HW type ", $byte[3] , $byte[4]);
-  
-  my $HARD = $byte[5]<<8 | $byte[6];
-  my $HVER = $byte[7];
-  my $ID   = $byte[9]<<24 | $byte[10]<<16 | $byte[11]<<8 | $byte[12]; 
-  
-  my %id_map = (0x000005F7 => "Bistable Relay"
-               ,0x000005E9 => "RGB LED Controller"
-               ,0x00000608 => "Back Box Button"
-               ,0x000005D4 => "IR RxTx"
-               );
-            
-  my $desc = "";
-  
-  if (exists($id_map{$ID})) {
-    $desc =  "(".$id_map{$ID}.")";
-  }
-  
-  $result .= sprintf(" HARD=0x%04X HVER=0x%02X ID=0x%08X %s"
-                    ,$HARD
-                    ,$HVER
-                    ,$ID
-                    ,$desc);
-  
+  my ($frame_type , $response_flag , $number , $group) = HAPCONF::util::message_header(@message);
+
+  if    ($frame_type == 0x10C) {%result = HAPCONF::util::decode_supply_voltage_message(@message); $result = $result{"nice"}}
+  elsif ($frame_type == 0x111) {%result = HAPCONF::util::decode_device_id_message     (@message); $result = $result{"nice"}}
+  elsif ($frame_type == 0x113) {%result = HAPCONF::util::decode_uptime_message        (@message); $result = $result{"nice"}}
+  elsif ($frame_type == 0x115) {%result = HAPCONF::util::decode_health_check_message  (@message); $result = $result{"nice"}}
+
   return $result;
 }
 

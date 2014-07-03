@@ -1,10 +1,11 @@
 #!/usr/bin/env perl
 ########################################################################################################################
 #
-# trace CAN bus e.g. for IR-messages...
+# in case of non-responsive nodes use cleanup...
 #
 ########################################################################################################################
 use HAPCONF;
+use HAPCONF::util;
 
 # create setup...
 my $project = HAPCONF->new("eval_board");
@@ -34,7 +35,28 @@ ir_rx_tx            ("IR")
 
 connect();
 
-trace_CAN();
+#exit_programming_mode("bbb" , "relay" , "led" , "IR");
+#
+#sleep(2);   # modules need some time to recover...
+#
+#supply_voltage       ("bbb" , "relay" , "led" , "IR");
+#
+#device_id            ("bbb" , "relay" , "led" , "IR");
+#
+#uptime               ("bbb" , "relay" , "led" , "IR");
+
+#status               ("bbb" , "relay" , "led" , "IR");
+health_check         ("bbb" );
+#health_check         ("relay");
+#health_check         ("led");
+#health_check         ("IR");
+
+#printf "reboot modules? (yN) : ";
+#my $answer = <STDIN>;
+#
+#if ($answer =~ m/^[jJyY]$/) {
+#  reboot("bbb" , "relay" , "led" , "IR");
+#}
 
 disconnect();
 

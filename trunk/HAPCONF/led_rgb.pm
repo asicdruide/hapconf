@@ -30,12 +30,12 @@ package HAPCONF::led_rgb;
 #=======================================================================================================================
 
 sub new {
-  my ($class 
+  my ($class
      ,$project
-     ,$name       
+     ,$name
      ,$version
      ) = @_;
-  
+
   $name = HAPCONF::util::check_name($name , "name");
 
   if (!defined($version)) {
@@ -49,10 +49,10 @@ sub new {
                                       ,"node_number"        => undef
                                       ,"node_group"         => undef
                                       ,"node_type"          => "???"
-                                      
+
                                       # user defined symbolic name...
                                       ,"port_name"          => {}
-                                      
+
                                       ,"powerup_value" => {"1"   =>    0
                                                           ,"2"   =>    0
                                                           ,"3"   =>    0
@@ -67,7 +67,7 @@ sub new {
                                                           ,"2"   =>    8
                                                           ,"3"   =>    8
                                                           ,"4"   =>    8
-                                                          }            
+                                                          }
                                       ,"min_value"     => {"1"   =>    0
                                                           ,"2"   =>    0
                                                           ,"3"   =>    0
@@ -86,13 +86,13 @@ sub new {
 
                                       # indirect control table...
                                       ,"box"                => []
-                                      
+
                                       # long description...
                                       ,"notes"              => []
 
                                       ,"box_group"          => {}
                                       }
-                                      
+
              ,"legal"              => {# legal port names...
                                        "ports"              => [1..4]
 
@@ -100,18 +100,18 @@ sub new {
                                                                ,"g"   =>  2
                                                                ,"b"   =>  3
                                                                ,"m"   =>  4
-                                                                      
+
                                                                ,"1"   =>  1
                                                                ,"2"   =>  2
                                                                ,"3"   =>  3
                                                                ,"4"   =>  4
                                                                }
-                                      
+
                                       # symbolic relay events...
                                       ,"relay_event"        => {"->on"        => 0xFF
                                                                ,"->off"       => 0x00
                                                                }
-                                      
+
                                       # symbolic indirect control commands...
                                       ,"cmd_value_timer"   => {# set to commands...
                                                                 "R="          => 0x00
@@ -134,56 +134,56 @@ sub new {
                                                                ,"B~"          => 0x12
                                                                ,"M~"          => 0x13
                                                                }
-                                                               
+
                                       ,"cmd_timer"          => {"toggle_R"    => 0x04
                                                                ,"toggle_G"    => 0x05
                                                                ,"toggle_B"    => 0x06
                                                                ,"toggle_M"    => 0x07
                                                                }
-                                                               
+
                                       ,"cmd_plain"          => {"stop_R"      => 0x14
                                                                ,"stop_G"      => 0x15
                                                                ,"stop_B"      => 0x16
                                                                ,"stop_M"      => 0x17
-                                                               
+
                                                                ,"start_R"     => 0x18
                                                                ,"start_G"     => 0x19
                                                                ,"start_B"     => 0x1A
                                                                ,"start_M"     => 0x1B
-                                                               
+
                                                                ,"RGBspeed+"   => 0x23
                                                                ,"RGBspeed-"   => 0x24
                                                                }
-                                                               
+
                                       ,"cmd_value"          => {"Rspeed="     => 0x1C
                                                                ,"Gspeed="     => 0x1D
                                                                ,"Bspeed="     => 0x1E
                                                                ,"Mspeed="     => 0x1F
                                                                ,"RGBspeed="   => 0x22
                                                                }
-                                                               
+
                                       ,"cmd_3value_timer"   => {# set to commands...
                                                                 "RGB="        => 0x20
                                                                ,"RGB~"        => 0x21
                                                                }
-                                                                
+
                                       ,"prg"                => {"PRGstop"     => [0x25 , 0x00]
                                                                ,"PRG1"        => [0x25 , 0x01]
                                                                ,"PRG2"        => [0x25 , 0x02]
                                                                }
- 
+
                                       ,"box_command"        => {"ENABLE_BOX"  => 0xDD
                                                                ,"DISABLE_BOX" => 0xDE
                                                                ,"TOGGLE_BOX"  => 0xDF
                                                                }
-                                      
+
                                       ,"box_state"          => {"enabled"     => 0x01
                                                                ,"disabled"    => 0x00
                                                                }
-                                      
+
                                       ,"version"            => {0x00          => "rev0"
                                                                }
-                                      
+
                                       ,"state_memory"       => {"yes"         => 0x01
                                                                ,"no"          => 0x00
                                                                }
@@ -191,10 +191,10 @@ sub new {
              };
 
   bless($self , $class);
-  
+
   # register ourself...
   $project->add_node($name , $self);
-  
+
   return $self;
 }
 
@@ -202,13 +202,13 @@ sub new {
 
 sub id {
   my ($self , $node_number , $node_group) = @_;
-  
+
   $node_number = HAPCONF::util::check_number($node_number , "node_number");
   $node_group  = HAPCONF::util::check_number($node_group  , "node_group" );
 
   $self->{"value"}->{"node_number"} = $node_number;
   $self->{"value"}->{"node_group" } = $node_group;
-  
+
   $self->{"project"}->set_node_id($self->{"value"}->{"name"} , $node_number , $node_group);
 
   return $self;
@@ -216,10 +216,18 @@ sub id {
 
 #=======================================================================================================================
 
+sub get_id {
+  my ($self) = @_;
+
+  return ($self->{"value"}->{"node_number"} , $self->{"value"}->{"node_group"});
+}
+
+#=======================================================================================================================
+
 # assign symbolic name on port...
 sub port_name {
   my ($self , $port , $port_name) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : illegal port '%s'.\n", $port;
     Carp::confess();
@@ -230,11 +238,11 @@ sub port_name {
   }
   else {
     my $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"legal"}->{"port"     }->{$port_name} = $port;
     $self->{"value"}->{"port_name"}->{$port     } = $port_name;
   }
-  
+
   return $self;
 }
 
@@ -242,9 +250,9 @@ sub port_name {
 
 sub notes {
   my ($self , $notes) = @_;
-  
+
   push(@{$self->{"value"}->{"notes"}} , $notes);
-  
+
   return $self;
 }
 
@@ -252,7 +260,7 @@ sub notes {
 
 sub powerup_value {
   my ($self , $port , $value_spec) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : unknown port '%s'.\n", $port;
     Carp::confess();
@@ -273,7 +281,7 @@ sub powerup_value {
       Carp::confess();
     }
   }
-  
+
   return $self;
 }
 
@@ -281,7 +289,7 @@ sub powerup_value {
 
 sub dimming_time {
   my ($self , $port , $time_spec) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : unknown port '%s'.\n", $port;
     Carp::confess();
@@ -292,10 +300,10 @@ sub dimming_time {
   }
   else {
     $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"value"}->{"dimming_time"}->{$port} = $time_spec;
   }
-  
+
   return $self;
 }
 
@@ -303,7 +311,7 @@ sub dimming_time {
 
 sub min_value {
   my ($self , $port , $value_spec) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : unknown port '%s'.\n", $port;
     Carp::confess();
@@ -314,10 +322,10 @@ sub min_value {
   }
   else {
     $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"value"}->{"min_value"}->{$port} = $value_spec;
   }
-  
+
   return $self;
 }
 
@@ -325,7 +333,7 @@ sub min_value {
 
 sub max_value {
   my ($self , $port , $value_spec) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : unknown port '%s'.\n", $port;
     Carp::confess();
@@ -336,10 +344,10 @@ sub max_value {
   }
   else {
     $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"value"}->{"max_value"}->{$port} = $value_spec;
   }
-  
+
   return $self;
 }
 
@@ -347,7 +355,7 @@ sub max_value {
 
 sub state_memory {
   my ($self , $port , $state_spec) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : unknown port '%s'.\n", $port;
     Carp::confess();
@@ -358,10 +366,10 @@ sub state_memory {
   }
   else {
     $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"value"}->{"state_memory"}->{$port} = $self->{"legal"}->{"state_memory"}->{$state_spec} << ($port-1);
   }
-  
+
   return $self;
 }
 
@@ -369,7 +377,7 @@ sub state_memory {
 
 sub message {
   my ($self , $name , $event_spec , $opt) = @_;
-  
+
   if (exists(    $self->{"legal"}->{"relay_event"}->{$event_spec})) {
     if (exists(  $self->{"legal"}->{"port"       }->{$opt       })) {
 
@@ -386,7 +394,7 @@ sub message {
                     ,undef
                     ,undef
                     );
-                    
+
       $self->{"project"}->add_message($name , @message);
     }
     else {
@@ -394,11 +402,11 @@ sub message {
       Carp::confess();
     }
   }
-  else {    
+  else {
     printf STDERR "ERROR : illegal event specification '%s'.\n", $event_spec;
     Carp::confess();
   }
-  
+
   return $self;
 }
 
@@ -406,24 +414,24 @@ sub message {
 
 # implements direct control...
 sub send {
-  my ($self 
+  my ($self
      ,$command
      ,$port_list
      ) = @_;
   # tbd...
-  
+
   return $self;
 }
 
 #=======================================================================================================================
 
 sub box {
-  my ($self 
+  my ($self
      ,$state        # enabled/disabled
      ,$command      # one of many
      ,@opt
      ) = @_;
-     
+
   my $box_group;
   my $trigger;
   my $group_list;
@@ -449,23 +457,23 @@ sub box {
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   my $timer = 0;
-  
+
   if ($command =~ m/^(.+)#([0-9]+)$/) {
     $command = $1;
     $timer   = $2;
   }
-  
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   my @value;
-  
+
   if ($command =~ m/^(.+?)(\=|\~|\+\=|\-\=)(.+)$/) {
     $command = $1.$2;
     @value   = split(/\s,\s/ , $3);
   }
-  
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (exists( $self->{"legal"}->{"cmd_value_timer"}->{$command})) {
     $INSTR1 = $self->{"legal"}->{"cmd_value_timer"}->{$command};
@@ -477,7 +485,7 @@ sub box {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   elsif (exists($self->{"legal"}->{"cmd_timer"}->{$command})) {
     $INSTR1 =   $self->{"legal"}->{"cmd_timer"}->{$command};
-    $INSTR3 = $timer; 
+    $INSTR3 = $timer;
 
     ($trigger , $group_list) = @opt;
   }
@@ -500,7 +508,7 @@ sub box {
     $INSTR2 = $value[0];
     $INSTR3 = $value[1];
     $INSTR4 = $value[2];
-    $INSTR5 = $timer; 
+    $INSTR5 = $timer;
 
     ($trigger , $group_list) = @opt;
   }
@@ -520,12 +528,12 @@ sub box {
       printf STDERR "ERROR : unknown box_group '%s'.\n", $box_group;
       Carp::confess();
     }
-    
+
     # check that group is continuous...
     my @box_group = @{$self->{"value"}->{"box_group"}->{$box_group}};
     {
       my $x = $box_group[0];
-      
+
       foreach my $i (0..scalar(@box_group)-1) {
         if ($x+$i != $box_group[$i]) {
           printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $box_group, join("," , @box_group);
@@ -543,7 +551,7 @@ sub box {
     Carp::confess();
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   # fetch trigger message...
   my @trigger = $self->{"project"}->get_message($trigger);
 
@@ -551,7 +559,7 @@ sub box {
   if (defined($group_list)) {
     foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
       my $this_box = scalar(@{$self->{"value"}->{"box"}});
-      
+
       push(@{$self->{"value"}->{"box_group"}->{$box_group}} , $this_box);
     }
   }
@@ -562,11 +570,11 @@ sub box {
                    ,join(" , " , @opt)
                    ,join(" " , map {if (defined($_)) {
                                       sprintf("=%02X",$_);
-                                    } 
+                                    }
                                     else {
                                       "x00";
                                     }
-                               } 
+                               }
                                @trigger
                     )
                    );
@@ -585,7 +593,7 @@ sub box {
                                       ,$doc
                                       ]
   );
-  
+
   return $self;
 }
 
@@ -593,7 +601,7 @@ sub box {
 
 sub flash {
   my ($self , $cmd) = @_;
-  
+
   my $project          =               $self->{"project"};
   my $number           =               $self->{"value"  }->{"node_number"};
   my $group            =               $self->{"value"  }->{"node_group" };
@@ -603,14 +611,14 @@ sub flash {
   my @ports            =             @{$self->{"legal"  }->{"ports"      }};
   my @port_name        =          map {$self->{"value"  }->{"port_name"  }->{$_}} @ports;
   my $notes            = join("\n" , @{$self->{"value"  }->{"notes"      }});
-  
+
   my $msg = "";
-  
+
   ######################################################################################################################
   # check that we are what we expect to be...
-  { 
+  {
     my %FWping = HAPCONF::util::FWping($project ,$number , $group);
-    
+
     if ($FWping{"msg"} eq "pass") {
       if ($FWping{"ATYPE"} != 0x08) {
         $msg .= sprintf("ERROR : Node(%s,%s) is not a led controller module\n"
@@ -618,7 +626,7 @@ sub flash {
                        ,$group
                        );
       }
-      
+
       if ($FWping{"AVERS"} != $self->{"value"}->{"version"}) {
         $msg .= sprintf("ERROR : Node(%s,%s) has different version than configured (expected:%d found:%d)\n"
                        ,$number
@@ -634,16 +642,16 @@ sub flash {
     }
     else {
       $msg = $FWping{"msg"};
-    }   
+    }
   }
 
   if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a button module of correct version.\n"}
-  else {printf STDERR $msg;$msg = ""}    
+  else {printf STDERR $msg;$msg = ""}
 
   if ($msg eq "pass") {$msg = HAPCONF::util::one_node_enter_programming_mode($project , $number , $group)}
-  
+
   if ($msg eq "pass") {printf STDERR "INFO : switched to programming mode\n"}
-  else {printf STDERR $msg;$msg = ""}    
+  else {printf STDERR $msg;$msg = ""}
   #
   ######################################################################################################################
 
@@ -674,31 +682,31 @@ sub flash {
     push(@data , $self->{"value"}->{"powerup_value"}->{4}); # M - channel 4 set power up state
     push(@data , 0x00                                    ); # M - channel 4 last saved in eeprom state
 
-    # Bits<4:7> - state memory    (channel 1 - channel 4); possible values: 
+    # Bits<4:7> - state memory    (channel 1 - channel 4); possible values:
     #  * '1' - channel value sets to previous state when turning channel on
     #  * '0' - no memory of last state; (works with START & TOGGLE instructions)
-    # Bits<0:3> - power up source (channel 1 - channel 4), possible values: 
+    # Bits<0:3> - power up source (channel 1 - channel 4), possible values:
     #  * '1' - power up from last saved
     #  * '0' - from set power up values
     my $state_memory_byte = 0;
     my $powerup_src_byte  = 0;
-    
+
     map {$state_memory_byte |= $self->{"value"}->{"state_memory"}->{$_}} @ports;
     map {$powerup_src_byte  |= $self->{"value"}->{"powerup_last"}->{$_}} @ports;
 
     push(@data , $state_memory_byte<<4
                  |
-                 $powerup_src_byte <<0); 
+                 $powerup_src_byte <<0);
 
     push(@data , $self->{"value"}->{"dimming_time"}->{1}); # R.dimming time
     push(@data , $self->{"value"}->{"dimming_time"}->{2}); # R.dimming time
     push(@data , $self->{"value"}->{"dimming_time"}->{3}); # G.dimming time
     push(@data , $self->{"value"}->{"dimming_time"}->{4}); # M.dimming time
-                        
+
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00008 , @data);
 
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -707,16 +715,16 @@ sub flash {
 
   ######################################################################################################################
   # module name...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing module name to EEPROM...\n"}
 
     my @data = HAPCONF::util::module_name_data($name);
 
     # write data...
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00030 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -727,14 +735,14 @@ sub flash {
   # collect boxes to be enabled...
   if ($msg eq "pass") {
     printf STDERR "INFO : writing box enables to EEPROM...\n";
-    
+
     my @data = HAPCONF::util::box_enable_data(@box);
-    
+
     # write data...
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00040 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -751,13 +759,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008800 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008800 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -766,7 +774,7 @@ sub flash {
 
   ######################################################################################################################
   # collect port names...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing port names to Flash...\n"}
 
     my @data = HAPCONF::util::port_name_data(@port_name);
@@ -774,13 +782,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008400 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008400 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -789,7 +797,7 @@ sub flash {
 
   ######################################################################################################################
   # collect notes...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing notes to Flash...\n"}
 
     my @data = HAPCONF::util::notes_data($notes);
@@ -797,13 +805,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008000 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008000 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -817,7 +825,7 @@ sub flash {
   HAPCONF::util::one_node_exit_programming_mode($project , $number , $group);
 
   printf STDERR "INFO : switched to normal mode\n";
-  
+
   return undef;
 }
 
@@ -825,18 +833,22 @@ sub flash {
 
 sub message_decoder {
   my ($self , @message) = @_;
-  
+
   my $result = "";
 
   my ($frame_type , $response_flag , $number , $group) = HAPCONF::util::message_header(@message);
 
-  if ($number == $self->{"value"}->{"node_number"}
+  if (defined(   $self->{"value"}->{"node_number"})
+      &&
+      defined(   $self->{"value"}->{"node_group"})
+      &&
+      $number == $self->{"value"}->{"node_number"}
       &&
       $group  == $self->{"value"}->{"node_group" }) {
     # it's one of our message...
     if ($frame_type == 0x308) {$result = $self->decode_led_reg_message(@message)}
   }
-    
+
   return $result;
 }
 
@@ -844,23 +856,23 @@ sub message_decoder {
 
 sub decode_led_reg_message {
   my ($self , @message) = @_;
-  
+
   my %map1 = (1 => "R"
              ,2 => "G"
              ,3 => "B"
              ,4 => "M"
              );
-            
+
   my %map2 = (0x00 => "off"
              ,0xFF => "on"
              );
-            
-            
+
+
   my $channel    = $message[7];
   my $status     = $message[8];
   my $relay      = $message[9];
   my $result;
-  
+
   if ($channel == 4) {
     $result     = sprintf ("LEDs are %s" , $map2{$relay});
   }

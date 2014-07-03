@@ -1,13 +1,14 @@
 #!/usr/bin/env perl
-
+########################################################################################################################
+#
+# assign abstract names to input ports...
+#
+########################################################################################################################
 use HAPCONF;
-
 
 # create setup...
 my $project = HAPCONF->new("eval_board");
 
-# second step of bootstrapping -- assign abstract names to ports...
-#
 ethernet            ("eth")
   ->url             ("192.168.0.100:1001")
 ;
@@ -30,7 +31,6 @@ button_back_box13   ("bbb")
   ->message         ("m"                    , "c"     , 13)
 ;
 
-
 relay_bistable_NO   ("relay")
   ->id              (3 , 8)
 ;
@@ -43,23 +43,10 @@ led_rgb             ("dimmer")
   ->id              (4 , 8)
 ;
 
-go_online();
+connect();
 
 # now we can press buttons and note which one is connected to which port...
-trace_CAN();   # comment this line to identify outputs...
+trace_CAN();
 
-
-# for relay try direct control, note down which port is which...
-my $node = node("relay");
-
-foreach my $port (1..6) {
-  printf "INFO : port:%d\n", $port;
-  foreach my $i (0..3) {
-    $node->send("toggle" , $port);
-    sleep(1);
-  }
-}
-
-
-go_offline();
+disconnect();
 

@@ -1,15 +1,13 @@
 #!/usr/bin/env perl
 ########################################################################################################################
 #
-# trace CAN bus e.g. for IR-messages...
+# assign abstract names to output ports...
 #
 ########################################################################################################################
 use HAPCONF;
 
 # create setup...
 my $project = HAPCONF->new("eval_board");
-
-begin_log("TxCAN" , "RxCAN");
 
 ethernet            ("eth")
   ->url             ("192.168.0.100:1001")
@@ -23,19 +21,26 @@ relay_bistable_NO   ("relay")
   ->id              (3 , 8)
 ;
 
-led_rgb             ("led")
-  ->id              (4 , 8)
-;
-
 ir_rx_tx            ("IR")
   ->id              (5 , 8)
 ;
 
+led_rgb             ("dimmer")
+  ->id              (4 , 8)
+;
 
 connect();
 
-trace_CAN();
+# for relays use direct control, note down which port is which...
+my $node = node("relay");
+
+foreach my $port (1..6) {
+  printf "INFO : port:%d\n", $port;
+  foreach my $i (0..3) {
+    $node->send("toggle" , $port);
+    sleep(1);
+  }
+}
 
 disconnect();
-
 

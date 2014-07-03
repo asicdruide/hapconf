@@ -4,7 +4,6 @@
 # test different dimmer UIs
 #
 ########################################################################################################################
-
 use HAPCONF;
 
 # create setup...
@@ -12,26 +11,30 @@ my $project = HAPCONF->new("eval_board");
 
 #begin_log("TxCAN" , "RxCAN");
 
-
 ethernet                 ("eth")
   ->url                  ("192.168.0.100:1001")
-;                        
-                         
+;
+
 button_back_box13        ("bbb")
   ->id                   (6 , 8)
                          # message name            event     port
-  # UI1 : up-down button
-  ->message              ("dim_down"             , "c"     , 1 )
-  ->message              ("dim_up"               , "c"     , 2 )
-  
+  # UI1 : separate up-down button
+  ->message              ("dim1_off"             , "co"    , 1 )
+  ->message              ("dim1_down"            , "c="    , 1 )
+  ->message              ("dim1_down_stop"       , "o"     , 1 )
+
+  ->message              ("dim1_on"              , "co"    , 2 )
+  ->message              ("dim1_up"              , "c="    , 2 )
+  ->message              ("dim1_up_stop"         , "o"     , 2 )
+
   # UI2 :  single button
-  ->message              ("dim_start"            , "c"     , 7 )
-  ->message              ("dim_stop"             , "o"     , 7 )
-  
+  ->message              ("dim2_start"           , "c"     , 7 )
+  ->message              ("dim2_stop"            , "o"     , 7 )
+
   # UI3 : attached to switch (different value dependinng on time-of-day)...
-  ->message              ("dim_on"               , "c"     , 10 )
-  ->message              ("dim_off"              , "o"     , 10 )
-  
+  ->message              ("dim3_on"              , "c"     , 10 )
+  ->message              ("dim3_off"             , "o"     , 10 )
+
   # switches between day and night...
   ->message              ("day"                  , "c"     , 12 )
   ->message              ("night"                , "o"     , 12 )
@@ -51,8 +54,8 @@ button_back_box13        ("bbb")
 
 ir_rx_tx                 ("IR")
   ->id                   (5 , 8)
-  ->message              ("dim_startIR"          , "RC5-0-1-begin")
-  ->message              ("dim_stopIR"           , "RC5-0-1-end"  )
+  ->message              ("dim2_startIR"         , "RC5-0-1-begin")
+  ->message              ("dim2_stopIR"          , "RC5-0-1-end"  )
 ;
 
 # not really needed for dimmer test scenarios...
@@ -62,16 +65,13 @@ relay_bistable_NO        ("relay")
   ->box                  ("enabled" , "turn_off" ,        "1,2,3,4,5,6" , "all_off")
 ;
 
-
-
-
 led_rgb                  ("dimmer")
   ->id                   (4 , 8)
   ->port_name            ( 1   , "R" )
   ->port_name            ( 2   , "G" )
   ->port_name            ( 3   , "B" )
   ->port_name            ( 4   , "M" )
-  ->dimming_time         ("R" , 5)
+  ->dimming_time         ("R" , 4)
   ->dimming_time         ("G" , 3)
   ->dimming_time         ("B" , 5)
   ->powerup_value        ("R" , 0)
@@ -82,43 +82,50 @@ led_rgb                  ("dimmer")
   ->state_memory         ("G" , "yes")
   ->state_memory         ("B" , "yes")
   ->state_memory         ("M" , "no" )
+  ->min_value            ("R" , 5)
 
   # UI1 : up-down button
-  ->box                  ("enabled" , "R+=16"                                 , "dim_up"                    )
-  ->box                  ("enabled" , "R-=16"                                 , "dim_down"                  )
-                                                                                                            
-  # UI2 :  single button                                                                                    
-  ->box                  ("enabled" , "start_G"                               , "dim_start"                 )
-  ->box                  ("enabled" , "stop_G"                                , "dim_stop"                  )
-  ->box                  ("enabled" , "start_G"                               , "dim_startIR"               )
-  ->box                  ("enabled" , "stop_G"                                , "dim_stopIR"                )
-                                                                                                            
-  # UI3 : attached to switch (different value depending on time-of-day)...                                 
-  ->box                  ("disabled", "B=255"                                 , "dim_on"     , "group_day"  )
-  ->box                  ("disabled", "B=0"                                   , "dim_off"    , "group_day"  )
-  ->box                  ("enabled" , "B~16"                                  , "dim_on"     , "group_night")
-  ->box                  ("enabled" , "B~0"                                   , "dim_off"    , "group_night")
+  ->box                  ("enabled" , "toggle_R"                              , "dim1_on"                    )
+  ->box                  ("enabled" , "R~255"                                 , "dim1_up"                    )
+  ->box                  ("enabled" , "stop_R"                                , "dim1_up_stop"               )
 
-  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_day"             , "day"                       )
-  ->box                  ("enabled" , "DISABLE_BOX" , "group_night"           , "day"                       )
-  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_night"           , "night"                     )
-  ->box                  ("enabled" , "DISABLE_BOX" , "group_day"             , "night"                     )
-                                                                                                           
-  # central off-switch...                                 
-  ->box                  ("enabled" , "R=0"                                   , "all_off"                   )
-  ->box                  ("enabled" , "G=0"                                   , "all_off"                   )
-  ->box                  ("enabled" , "B=0"                                   , "all_off"                   )
+  ->box                  ("enabled" , "toggle_R"                              , "dim1_off"                   )
+  ->box                  ("enabled" , "R~5"                                   , "dim1_down"                  )
+  ->box                  ("enabled" , "stop_R"                                , "dim1_down_stop"             )
+
+
+  # UI2 :  single button
+  ->box                  ("enabled" , "start_G"                               , "dim2_start"                 )
+  ->box                  ("enabled" , "stop_G"                                , "dim2_stop"                  )
+  ->box                  ("enabled" , "start_G"                               , "dim2_startIR"               )
+  ->box                  ("enabled" , "stop_G"                                , "dim2_stopIR"                )
+
+  # UI3 : attached to switch (different value depending on time-of-day)...
+  ->box                  ("disabled", "B=255"                                 , "dim3_on"     , "group_day"  )
+  ->box                  ("disabled", "B=0"                                   , "dim3_off"    , "group_day"  )
+  ->box                  ("enabled" , "B~16"                                  , "dim3_on"     , "group_night")
+  ->box                  ("enabled" , "B~0"                                   , "dim3_off"    , "group_night")
+
+  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_day"             , "day"                        )
+  ->box                  ("enabled" , "DISABLE_BOX" , "group_night"           , "day"                        )
+  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_night"           , "night"                      )
+  ->box                  ("enabled" , "DISABLE_BOX" , "group_day"             , "night"                      )
+
+  # central off-switch...
+  ->box                  ("enabled" , "R=0"                                   , "all_off"                    )
+  ->box                  ("enabled" , "G=0"                                   , "all_off"                    )
+  ->box                  ("enabled" , "B=0"                                   , "all_off"                    )
 ;
 
 printf "flash configuration into modules? (yN) : ";
 my $answer = <STDIN>;
 
 if ($answer =~ m/^[jJyY]$/) {
-  go_online();
-  #flash_fast("bbb");
+  connect();
+  flash_fast("bbb");
   #flash_fast("relay");
   flash_fast("dimmer");
-  go_offline();
+  disconnect();
 }
 
 

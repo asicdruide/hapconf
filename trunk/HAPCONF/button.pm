@@ -30,14 +30,14 @@ package HAPCONF::button;
 #=======================================================================================================================
 
 sub new {
-  my ($class 
+  my ($class
      ,$project
      ,$name
-     ,$version       
+     ,$version
      ) = @_;
-  
+
   $name = HAPCONF::util::check_name($name , "name");
-  
+
   if (!defined($version)) {
     printf STDERR "ERROR : undefined version not allowed.\n";
     Carp::confess();
@@ -49,37 +49,37 @@ sub new {
                                       ,"node_number"           => undef
                                       ,"node_group"            => undef
                                       ,"node_type"             => "???"
-                                                               
+
                                       # user defined symbolic name...
                                       ,"port_name"             => {}
-                                                                  
-                                      # enabled events...                            
-                                      ,"event_enable"          => {}                         
-                                                               
+
+                                      # enabled events...
+                                      ,"event_enable"          => {}
+
                                       # indirect control table...
-                                      ,"box"                   => [] 
-                                                               
+                                      ,"box"                   => []
+
                                       ,"notes"                 => []
-                                                               
+
                                       ,"box_group"             => {}
-                                      
+
                                       ,"thermostat_threshold"  => [0x00 , 0x00]
                                       ,"thermostat_hysteresis" =>  0x00
                                       ,"temperature_offset"    => [0x00 , 0x00]
                                       }
-                                      
+
              ,"legal"              => {# default port names...
                                        "ports"              => []
-                                       
+
                                       ,"port"               => {}
-                                                              
-                                      # symbolic events...                        
-                                      ,"button_event"       => {#           code   LED     bit<0>- on 
-                                                                #                             <1>- 400ms 
-                                                                #                             <2>- 4s 
-                                                                #                             <3>- off 
+
+                                      # symbolic events...
+                                      ,"button_event"       => {#           code   LED     bit<0>- on
+                                                                #                             <1>- 400ms
+                                                                #                             <2>- 4s
+                                                                #                             <3>- off
                                                                 #                             <4>- <400ms
-                                                                #                             <5>- <4s  
+                                                                #                             <5>- <4s
                                                                 #                             <6>- >4s
                                                                 "c"     => [0xFF , undef     , 0x01]  # "closed"
                                                                ,"c="    => [0xFE , undef     , 0x02]  # "closed and held for 400ms"
@@ -105,31 +105,31 @@ sub new {
                                                                ,"1c==o" => [0xFA , 0xFF      , 0x40]  # "closed and open after 4s"
                                                                ,"1o"    => [0x00 , 0xFF      , 0x08]  # "open"
                                                                }
-                                      
+
                                       ,"thermostat_event"   => {# events without LED dependency
                                                                 "T^"     => 0xFF  # over temperature
                                                                ,"Tv"     => 0x00  # under temperature
                                                                }
-                                      
+
                                       # symbolic indirect control commands...
                                       ,"led_command"        => {"led_on"              => 0x01
                                                                ,"led_off"             => 0x00
                                                                ,"led_toggle"          => 0x02
                                                                }
-                                                               
+
                                       ,"thermostat_command" => {"set_thermostat_to"   => 0x03
-                                                               ,"dec_thermostat_by"   => 0x04                        
-                                                               ,"inc_thermostat_by"   => 0x05                        
-                                                               }                        
-                                                                                       
-                                      ,"box_command"        => {"ENABLE_BOX"          => 0xDD                        
-                                                               ,"DISABLE_BOX"         => 0xDE                        
-                                                               ,"TOGGLE_BOX"          => 0xDF                        
-                                                               }                        
-                                                              
-                                      ,"box_state"          => {"enabled"             => 0x01                        
-                                                               ,"disabled"            => 0x00                        
-                                                               }   
+                                                               ,"dec_thermostat_by"   => 0x04
+                                                               ,"inc_thermostat_by"   => 0x05
+                                                               }
+
+                                      ,"box_command"        => {"ENABLE_BOX"          => 0xDD
+                                                               ,"DISABLE_BOX"         => 0xDE
+                                                               ,"TOGGLE_BOX"          => 0xDF
+                                                               }
+
+                                      ,"box_state"          => {"enabled"             => 0x01
+                                                               ,"disabled"            => 0x00
+                                                               }
 
                                       ,"version"            => {0x00                  => "button, DIN rail"
                                                                ,0x01                  => "button, back box13"
@@ -138,15 +138,15 @@ sub new {
                                                                }
                                       }
              };
-  
+
   bless($self , $class);
-  
+
   # resolve version dependencies...
   if (exists(                         $self->{"legal"}->{"version"}->{$version})) {
     $self->{"value"}->{"node_type"} = $self->{"legal"}->{"version"}->{$version};
 
     my @ports;
-  
+
     if ($version eq "0") {
       # DIN rail button
       @ports = (1..8);
@@ -170,7 +170,7 @@ sub new {
     foreach my $i (@ports) {
       $self->{"legal"}->{"port"}->{$i} = $i;
     }
-    
+
     $self->{"legal"}->{"ports"} = [@ports];
 
     # register ourself...
@@ -188,13 +188,13 @@ sub new {
 
 sub id {
   my ($self , $node_number , $node_group) = @_;
-  
+
   $node_number = HAPCONF::util::check_number($node_number , "node_number");
   $node_group  = HAPCONF::util::check_number($node_group  , "node_group" );
 
   $self->{"value"}->{"node_number"} = $node_number;
   $self->{"value"}->{"node_group" } = $node_group;
-  
+
   $self->{"project"}->set_node_id($self->{"value"}->{"name"} , $node_number , $node_group);
 
   return $self;
@@ -202,10 +202,18 @@ sub id {
 
 #=======================================================================================================================
 
+sub get_id {
+  my ($self) = @_;
+
+  return ($self->{"value"}->{"node_number"} , $self->{"value"}->{"node_group"});
+}
+
+#=======================================================================================================================
+
 # assign symbolic name on port...
 sub port_name {
   my ($self , $port , $port_name) = @_;
-  
+
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : illegal port '%s'.\n", $port;
     Carp::confess();
@@ -216,11 +224,11 @@ sub port_name {
   }
   else {
     my $port = $self->{"legal"}->{"port"}->{$port};
-    
+
     $self->{"legal"}->{"port"     }->{$port_name} = $port;
     $self->{"value"}->{"port_name"}->{$port     } = $port_name;
   }
-  
+
   return $self;
 }
 
@@ -228,9 +236,9 @@ sub port_name {
 
 sub notes {
   my ($self , $notes) = @_;
-  
+
   push(@{$self->{"value"}->{"notes"}} , $notes);
-  
+
   return $self;
 }
 
@@ -238,11 +246,11 @@ sub notes {
 
 sub message {
   my ($self , $name , $event_spec , $opt) = @_;
-  
+
   if (exists($self->{"legal"}->{"button_event"}->{$event_spec})) {
     if (exists(  $self->{"legal"}->{"port"}->{$opt})) {
       my $port = $self->{"legal"}->{"port"}->{$opt};
-      
+
       # format button frame and register centrally that other can refer to it...
       my @message = (0x30,0x10     # universal module frame, button, 0,0,0,RE
                     ,$self->{"value"}->{"node_number"}
@@ -256,9 +264,9 @@ sub message {
                     ,0xFF
                     ,0xFF
                     );
-                    
+
       $self->{"value"}->{"event_enable"}->{$port}->{$event_spec} = 1;
-                    
+
       $self->{"project"}->add_message($name , @message);
     }
     else {
@@ -282,18 +290,18 @@ sub message {
                   );
     $self->{"project"}->add_message($name , @message);
   }
-  else {    
+  else {
     printf STDERR "ERROR : illegal event specification '%s'.\n", $event_spec;
     Carp::confess();
   }
-  
+
   return $self;
 }
 
 #=======================================================================================================================
 
 sub box {
-  my ($self 
+  my ($self
      ,$state        # enabled/disabled
      ,$command      # one of many
      ,$opt          # depends on command: port_list, thermostat parameters,...
@@ -304,7 +312,7 @@ sub box {
   if (!defined($group_list)) {
     $group_list = "";
   }
-  
+
   my $box_state;
   my $INSTR1 = 0x00;
   my $INSTR2 = 0x00;
@@ -324,7 +332,7 @@ sub box {
     printf STDERR "ERROR : unknown box state '%s'.\n", $state;
     Carp::confess();
   }
-  
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (exists( $self->{"legal"}->{"led_command"}->{$command})) {
     $INSTR1 = $self->{"legal"}->{"led_command"}->{$command};
@@ -337,14 +345,14 @@ sub box {
     foreach my $port (split(/\s*,\s*/ , $opt)) {
       if (exists($self->{"legal"}->{"port"}->{$port})) {
         my $i =  $self->{"legal"}->{"port"}->{$port};
-        
+
         if ($i <= 8) {
           $INSTR2 |= 2**($i-1);
         }
         else {
           $INSTR3 |= 2**($i-9);
         }
-        
+
         push(@port_list , $self->{"legal"}->{"port"}->{$port});
       }
       else {
@@ -352,11 +360,11 @@ sub box {
         Carp::confess();
       }
     }
-    
+
     # store group membership...
     foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
       my $this_box = scalar(@{$self->{"value"}->{"box"}});
-      
+
       push(@{$self->{"value"}->{"box_group"}->{$box_group}} , $this_box);
     }
   }
@@ -382,12 +390,12 @@ sub box {
       printf STDERR "ERROR : unknown box_group '%s'.\n", $opt;
       Carp::confess();
     }
-    
+
     # check that group is continuous...
     my @box_group = @{$self->{"value"}->{"box_group"}->{$opt}};
     {
       my $x = $box_group[0];
-      
+
       foreach my $i (0..scalar(@box_group)-1) {
         if ($x+$i != $box_group[$i]) {
           printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $opt, join("," , @box_group);
@@ -398,11 +406,11 @@ sub box {
 
     $INSTR2 = $box_group[ 0]         & 0x7F;   # BoxX...
     $INSTR3 = (scalar(@box_group)-1) & 0x7F;   # BoxY...
-    
+
     # store group membership...
     foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
       my $this_box = scalar(@{$self->{"value"}->{"box"}});
-      
+
       push(@{$self->{"value"}->{"box_group"}} , $this_box);
     }
   }
@@ -412,21 +420,21 @@ sub box {
     Carp::confess();
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+
   my $doc = sprintf("%s %-15s %-20s %s %s"
                    ,$state
                    ,$command
                    ,$opt
                    ,join(" " , map {if (defined($_)) {
                                       sprintf("=%02X",$_);
-                                    } 
+                                    }
                                     else {
                                       "x00";
                                     }
-                               } 
+                               }
                                @trigger
                     )
-                   ,$group_list 
+                   ,$group_list
                    );
 
   push(@{$self->{"value"}->{"box"}} , [$box_state
@@ -443,7 +451,7 @@ sub box {
                                       ,$doc
                                       ]
   );
-  
+
   return $self;
 }
 
@@ -451,33 +459,33 @@ sub box {
 
 sub thermostat_threshold {
   my ($self , $temperature) = @_;
-  
+
   if (!defined($temperature)) {
     printf STDERR "ERROR : undefined thermostat temperature.\n";
     Carp::confess();
   }
-  
+
   if ($temperature < -55.0
       ||
       $temperature > 125.0){
     printf STDERR "ERROR : illegal thermostat temperature '%s'.\n", $temperature;
     Carp::confess();
   }
-  
+
   my $temp_int = int($temperature / 0.0625);
   my $temp_msb = ($temp_int % 0xFF00)>>8;
   my $temp_lsb = ($temp_int % 0x00FF)>>0;
-  
+
   #printf "DEBUG : thermostat temperature:%f(%d)  MSB=0x%02X   LSB=0x%02X\n"
   #      ,$temperature
   #      ,$temp_int
   #      ,$temp_msb
   #      ,$temp_lsb
   #      ;
-  
+
   $self->{"value"}->{"thermostat_threshold"} = [$temp_msb , $temp_lsb];
-  
-  
+
+
   return $self;
 }
 
@@ -485,30 +493,30 @@ sub thermostat_threshold {
 
 sub thermostat_hysteresis {
   my ($self , $temperature) = @_;
-  
+
   if (!defined($temperature)) {
     printf STDERR "ERROR : undefined thermostat hysteresis.\n";
     Carp::confess();
   }
-  
+
   if ($temperature <   0*0.25
       ||
       $temperature > 255*0.25){
     printf STDERR "ERROR : illegal thermostat hysteresis '%s'.\n", $temperature;
     Carp::confess();
   }
-  
+
   my $temp_int = int($temperature / 0.25);
-  
-  
+
+
   #printf "DEBUG : thermostat hysteresis:%f(%d) 0x%02X\n"
   #       ,$temperature
   #       ,$temp_int
   #       ,$temp_int
   #       ;
-  
+
   $self->{"value"}->{"thermostat_hysteresis"} = $temp_int;
-  
+
   return $self;
 }
 
@@ -516,34 +524,34 @@ sub thermostat_hysteresis {
 
 sub temperature_offset {
   my ($self , $temperature) = @_;
-  
+
   if (!defined($temperature)) {
     printf STDERR "ERROR : undefined offset temperature.\n";
     Carp::confess();
   }
-  
+
   if ($temperature < -20.0
       ||
       $temperature >  20.0){
     printf STDERR "ERROR : illegal offset temperature '%s'.\n", $temperature;
     Carp::confess();
   }
-  
+
   my $temp_int = int($temperature / 0.0625);
   my $temp_msb = ($temp_int % 0xFF00)>>8;
   my $temp_lsb = ($temp_int % 0x00FF)>>0;
-  
-  
+
+
   #printf "DEBUG : offset temperature:%f(%d)  MSB=0x%02X   LSB=0x%02X\n"
   #       ,$temperature
   #       ,$temp_int
   #       ,$temp_msb
   #       ,$temp_lsb
   #       ;
-  
+
   $self->{"value"}->{"temperature_offset"} = [$temp_msb , $temp_lsb];
-  
-  
+
+
   return $self;
 }
 
@@ -551,7 +559,7 @@ sub temperature_offset {
 
 sub flash {
   my ($self , $cmd) = @_;
-  
+
   my $project          =               $self->{"project"};
   my $number           =               $self->{"value"  }->{"node_number"          };
   my $group            =               $self->{"value"  }->{"node_group"           };
@@ -564,14 +572,14 @@ sub flash {
   my @therm_threshold  =             @{$self->{"value"  }->{"thermostat_threshold" }};
   my $therm_hysteresis =               $self->{"value"  }->{"thermostat_hysteresis"};
   my @temp_offset      =             @{$self->{"value"  }->{"temperature_offset"   }};
-  
+
   my $msg = "";
-  
+
   ######################################################################################################################
   # check that we are what we expect to be...
-  { 
+  {
     my %FWping = HAPCONF::util::FWping($project ,$number , $group);
-    
+
     if ($FWping{"msg"} eq "pass") {
       if ($FWping{"ATYPE"} != 0x01) {
         $msg .= sprintf("ERROR : Node(%s,%s) is not a button module\n"
@@ -579,7 +587,7 @@ sub flash {
                        ,$group
                        );
       }
-      
+
       if ($FWping{"AVERS"} != $self->{"value"}->{"version"}) {
         $msg .= sprintf("ERROR : Node(%s,%s) has different version than configured (configured:%d   found in module:%d)\n"
                        ,$number
@@ -595,16 +603,16 @@ sub flash {
     }
     else {
       $msg = $FWping{"msg"};
-    }   
+    }
   }
 
   if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a button module of correct version.\n"}
-  else {printf STDERR $msg;$msg = ""}    
+  else {printf STDERR $msg;$msg = ""}
 
   if ($msg eq "pass") {$msg = HAPCONF::util::one_node_enter_programming_mode($project , $number , $group)}
-  
+
   if ($msg eq "pass") {printf STDERR "INFO : switched to programming mode\n"}
-  else {printf STDERR $msg;$msg = ""}    
+  else {printf STDERR $msg;$msg = ""}
   #
   ######################################################################################################################
 
@@ -617,19 +625,19 @@ sub flash {
     my @data;
 
     printf STDERR "INFO : writing event enables to EEPROM...\n";
-    
+
     foreach my $i (@ports) {
       my $event_enable = 0;
-      
+
       if (exists(                      $self->{"value"}->{"event_enable"}->{$i})) {
         foreach my $event_spec (keys %{$self->{"value"}->{"event_enable"}->{$i}}) {
           $event_enable |=             $self->{"legal"}->{"button_event"}->{$event_spec}->[2];
         }
       }
-      
+
       push(@data , $event_enable);
     }
-      
+
     if ($version > 0) {
       # back box button modules have a temperature sensor...
       push(@data , $therm_threshold[0]); # ThermMSB
@@ -644,7 +652,7 @@ sub flash {
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00008 , @data);
 
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -653,16 +661,16 @@ sub flash {
 
   ######################################################################################################################
   # module name...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing module name to EEPROM...\n"}
 
     my @data = HAPCONF::util::module_name_data($name);
 
     # write data...
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00030 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -673,14 +681,14 @@ sub flash {
   # collect boxes to be enabled...
   if ($msg eq "pass") {
     printf STDERR "INFO : writing box enables to EEPROM...\n";
-    
+
     my @data = HAPCONF::util::box_enable_data(@box);
-    
+
     # write data...
     $msg = HAPCONF::util::EEPROM_write($project , $number , $group , 0xF00040 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -697,13 +705,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008800 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008800 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -712,7 +720,7 @@ sub flash {
 
   ######################################################################################################################
   # collect port names...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing port names to Flash...\n"}
 
     my @data = HAPCONF::util::port_name_data(@port_name);
@@ -720,13 +728,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008400 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008400 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -735,7 +743,7 @@ sub flash {
 
   ######################################################################################################################
   # collect notes...
-  if (defined($cmd) && $cmd eq "full") { 
+  if (defined($cmd) && $cmd eq "full") {
     if ($msg eq "pass") {printf STDERR "INFO : writing notes to Flash...\n"}
 
     my @data = HAPCONF::util::notes_data($notes);
@@ -743,13 +751,13 @@ sub flash {
     # erase data...
     $msg = HAPCONF::util::Flash_erase($project , $number , $group , 0x008000 , @data);
 
-    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}    
+    if ($msg ne "pass") {printf STDERR $msg;$msg = ""}
 
     # write data...
     $msg = HAPCONF::util::Flash_write($project , $number , $group , 0x008000 , @data);
-    
+
     if ($msg eq "pass") {printf STDERR "INFO : done.\n"}
-    else {printf STDERR $msg;$msg = ""}    
+    else {printf STDERR $msg;$msg = ""}
   }
   #
   ######################################################################################################################
@@ -763,7 +771,7 @@ sub flash {
   HAPCONF::util::one_node_exit_programming_mode($project , $number , $group);
 
   printf STDERR "INFO : switched to normal mode\n";
-  
+
   return undef;
 }
 
@@ -771,19 +779,23 @@ sub flash {
 
 sub message_decoder {
   my ($self , @message) = @_;
-  
+
   my $result = "";
 
   my ($frame_type , $response_flag , $number , $group) = HAPCONF::util::message_header(@message);
 
-  if ($number == $self->{"value"}->{"node_number"}
+  if (defined(   $self->{"value"}->{"node_number"})
+      &&
+      defined(   $self->{"value"}->{"node_group"})
+      &&
+      $number == $self->{"value"}->{"node_number"}
       &&
       $group  == $self->{"value"}->{"node_group" }) {
     # it's one of our messages...
     if    ($frame_type == 0x301) {$result = $self->decode_button_message     (@message)}
     elsif ($frame_type == 0x304) {$result = $self->decode_temperature_message(@message)}
   }
-    
+
   return $result;
 }
 
@@ -818,7 +830,7 @@ sub decode_button_message {
 sub decode_temperature_message {
   my ($self, @message) = @_;
   my $result = "";
-  
+
   my $mode = $message[ 7];
 
   if ($mode == 0x11) {
@@ -836,7 +848,7 @@ sub decode_temperature_message {
   elsif ($mode == 0x12) {
     # thermostat frame...
     my $status = $message[8];
-    
+
     my %map = (0x00 => "temperature below threshold"
               ,0x80 => "powerup-value"
               ,0xFF => "temperature above threshold"
@@ -844,7 +856,7 @@ sub decode_temperature_message {
 
     $result = sprintf("Thermostat:%s" , $map{$status});
   }
-  
+
   return $result;
 }
 

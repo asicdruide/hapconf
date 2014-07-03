@@ -13,8 +13,8 @@ my $project = HAPCONF->new("eval_board");
 #
 ethernet                 ("eth")
   ->url                  ("192.168.0.100:1001")
-;                        
-                         
+;
+
 button_back_box13        ("bbb")
   ->id                   (6 , 8)
                          # message name            event     port
@@ -79,16 +79,16 @@ relay_bistable_NO        ("relay")
   ->box                  ("enabled" , "toggle"   ,        "K1"                , "4up"  )
   ->box                  ("enabled" , "toggle"   ,        "K2"                , "5up"  )
   ->box                  ("enabled" , "toggle"   ,        "K3"                , "6up"  )
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K4"                , "7up"  )
   ->box                  ("enabled" , "toggle"   ,        "K4"                , "7down")
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K5"                , "8up"  )
   ->box                  ("enabled" , "toggle"   ,        "K5"                , "8down")
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K6"                , "9up"  )
   ->box                  ("enabled" , "toggle"   ,        "K6"                , "9down")
-                                                                              
+
   ->box                  ("enabled" , "turn_off" ,        "K1,K2,K3,K4,K5,K6" , "all_off")
 
   ->box                  ("enabled" , "turn_on"  ,        "K1,K2,K3,K4,K5,K6" , "1up")
@@ -110,7 +110,7 @@ node                     ("bbb")
   ->box                  ("enabled" , "led_off"      , 8                      , "light2->off"                   )
   ->box                  ("enabled" , "led_on"       , 9                      , "light3->on"                    )
   ->box                  ("enabled" , "led_off"      , 9                      , "light3->off"                   )
-                         
+
   #->box                  ("enabled" , "led_on"       , 12                     , "light1->on"    , "a"           )
   #->box                  ("enabled" , "led_off"      , 12                     , "light1->off"   , "a"           )
   #->box                  ("enabled" , "ENABLE_BOX"   , "a"                    , "light4->on"                    )
@@ -130,10 +130,10 @@ printf "flash configuration into modules? (yN) : ";
 my $answer = <STDIN>;
 
 if ($answer =~ m/^[jJyY]$/) {
-  go_online();
+  connect();
   flash_fast("bbb");
   flash_fast("relay");
-  go_offline();
+  disconnect();
 }
 
 

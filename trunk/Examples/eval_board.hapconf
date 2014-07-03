@@ -8,23 +8,23 @@ use HAPCONF;
 # led1    (2:on)       (4:on)       (6:on)
 # led2    1:2:off      3:4:off      5:6:off
 # led3    (1:on)       (3:on)       (5:on)
-# led4   
-# led5   
+# led4
+# led5
 # led6    (7:on)       (8:on)       (9:on)
 # led7     7:off        8:off        9:off
-# led8   
-# led9   
+# led8
+# led9
 # led10   10:on         11:on        12:on
 # led11   10:off        11:off       12:off
-# led12  
-# led13  
+# led12
+# led13
 #                       (13:on)
 #                        13:off
-# 
+#
 # modules:
 #  * button, back box13
 #  * relay, bistable, NO
-#  * RGB LED 
+#  * RGB LED
 #  * IR RxTx
 #  * Ethernet
 #
@@ -42,8 +42,8 @@ HAPCONF->new("eval_board");
 ##############################################################################
 ethernet                 ("eth")
   ->url                  ("192.168.0.100:1001")
-;                        
-                         
+;
+
 button_back_box13        ("bbb")
   ->id                   (6 , 8)
                          # message name            event     port
@@ -108,16 +108,16 @@ relay_bistable_NO        ("relay")
   ->box                  ("enabled" , "toggle"   ,        "K1"                , "4up"  )
   ->box                  ("enabled" , "toggle"   ,        "K2"                , "5up"  )
   ->box                  ("enabled" , "toggle"   ,        "K3"                , "6up"  )
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K4"                , "7up"  )
   ->box                  ("enabled" , "toggle"   ,        "K4"                , "7down")
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K5"                , "8up"  )
   ->box                  ("enabled" , "toggle"   ,        "K5"                , "8down")
-                                                                              
+
   ->box                  ("enabled" , "toggle"   ,        "K6"                , "9up"  )
   ->box                  ("enabled" , "toggle"   ,        "K6"                , "9down")
-                                                                              
+
   ->box                  ("enabled" , "turn_off" ,        "K1,K2,K3,K4,K5,K6" , "all_off")
 
   ->box                  ("enabled" , "turn_on"  ,        "K1,K2,K3,K4,K5,K6" , "1up")
@@ -139,7 +139,7 @@ node                     ("bbb")
   ->box                  ("enabled" , "led_off"      , "B8"                   , "K2->off"                   )
   ->box                  ("enabled" , "led_on"       , "B9"                   , "K3->on"                    )
   ->box                  ("enabled" , "led_off"      , "B9"                   , "K3->off"                   )
-                         
+
   #->box                  ("enabled" , "led_on"       , 12                     , "light1->on"    , "a"           )
   #->box                  ("enabled" , "led_off"      , 12                     , "light1->off"   , "a"           )
   #->box                  ("enabled" , "ENABLE_BOX"   , "a"                    , "light4->on"                    )
@@ -152,8 +152,8 @@ printf "flash configuration into modules? (yN) : ";
 my $answer = <STDIN>;
 
 if ($answer =~ m/^[jJyY]$/) {
-  go_online();
+  connect();
   flash_fast("bbb" , "relay");
-  go_offline();
+  disconnect();
 }
 

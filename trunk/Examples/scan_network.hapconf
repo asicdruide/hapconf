@@ -1,16 +1,16 @@
 #!/usr/bin/env perl
 ########################################################################################################################
 #
-# first step of bootstrapping -- find out network IDs...
+# find out network IDs...
 #
 ########################################################################################################################
-
 use HAPCONF;
 
 # create setup...
 HAPCONF->new("eval_board");
+begin_log("RxCAN");
 
-# 
+#
 ethernet            ("eth")
   ->url             ("192.168.0.100:1001")
 ;
@@ -27,6 +27,16 @@ led_rgb             ("led")
 ir_rx_tx            ("IR")
 ;
 
-go_online();
+connect();
 scan_network(0,10 , 8,8);
-go_offline();
+disconnect();
+
+
+
+#     ethernet            ("eth")
+#       ->url             ("89.72.103.107:80");   #"192.168.0.100:1001")
+#     ;
+#
+#     connect();
+#     scan_network(0,8 , 0,20   , 5);
+#     disconnect();
