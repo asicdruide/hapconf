@@ -627,7 +627,7 @@ sub one_node_health_check {
   my ($project , $number , $group) = @_;
 
   Tx($project
-    ,"one node health check request"
+    ,"one node health check request(1)"
     ,0x11    , 0x50    # one node exit programming mode
     ,0x00    , 0x00    # sender
     ,0x01    , 0x00    # status request, don't care
@@ -636,8 +636,11 @@ sub one_node_health_check {
     ,0x00    , 0x00    # don't care
     );
 
+  sleep(1);
+
+  # don't know why i've to request twice. According to docu i'd guess that once is enough, but did not work.
   Tx($project
-    ,"one node health check request"
+    ,"one node health check request(2)"
     ,0x11    , 0x50    # one node exit programming mode
     ,0x00    , 0x00    # sender
     ,0x01    , 0x00    # status request, don't care
