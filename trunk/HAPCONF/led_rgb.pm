@@ -58,10 +58,10 @@ sub new {
                                                           ,"3"   =>    0
                                                           ,"4"   =>  255
                                                           }
-                                      ,"powerup_last"  => {"1"   => 0x01
-                                                          ,"2"   => 0x02
-                                                          ,"3"   => 0x04
-                                                          ,"4"   => 0x00
+                                      ,"powerup_last"  => {"1"   => 0x01 << 0
+                                                          ,"2"   => 0x01 << 1
+                                                          ,"3"   => 0x01 << 2
+                                                          ,"4"   => 0x00 << 3
                                                           }
                                       ,"dimming_time"  => {"1"   =>    8
                                                           ,"2"   =>    8
@@ -96,96 +96,62 @@ sub new {
              ,"legal"              => {# legal port names...
                                        "ports"              => [1..4]
 
-                                      ,"port"               => {"r"   =>  1
-                                                               ,"g"   =>  2
-                                                               ,"b"   =>  3
-                                                               ,"m"   =>  4
+                                      ,"port"               => {"R"   =>  1
+                                                               ,"G"   =>  2
+                                                               ,"B"   =>  3
+                                                               ,"M"   =>  4
 
-                                                               ,"1"   =>  1
-                                                               ,"2"   =>  2
-                                                               ,"3"   =>  3
-                                                               ,"4"   =>  4
+                                                               ,"RGB" =>  5
                                                                }
 
                                       # symbolic relay events...
-                                      ,"relay_event"        => {"->on"        => 0xFF
-                                                               ,"->off"       => 0x00
+                                      ,"relay_event"        => {"->on"         => 0xFF
+                                                               ,"->off"        => 0x00
                                                                }
 
                                       # symbolic indirect control commands...
-                                      ,"cmd_value_timer"   => {# set to commands...
-                                                                "R="          => 0x00
-                                                               ,"G="          => 0x01
-                                                               ,"B="          => 0x02
-                                                               ,"M="          => 0x03
-                                                               # step down commands...
-                                                               ,"R-="         => 0x08
-                                                               ,"G-="         => 0x09
-                                                               ,"B-="         => 0x0A
-                                                               ,"M-="         => 0x0B
-                                                               # step up commands...
-                                                               ,"R+="         => 0x0C
-                                                               ,"G+="         => 0x0D
-                                                               ,"B+="         => 0x0E
-                                                               ,"M+="         => 0x0F
-                                                               # set softly to commands...
-                                                               ,"R~"          => 0x10
-                                                               ,"G~"          => 0x11
-                                                               ,"B~"          => 0x12
-                                                               ,"M~"          => 0x13
+                                      ,"cmd_value_timer"   => {# set_to commands...
+                                                                "="            => [undef , 0x00  , 0x01  , 0x02  , 0x03  , 0x20 ]
+                                                               # step_down_by commands...
+                                                               ,"-="           => [undef , 0x08  , 0x09  , 0x0A  , 0x0B  , undef]
+                                                               # step_up_by commands...
+                                                               ,"+="           => [undef , 0x0C  , 0x0D  , 0x0E  , 0x0F  , undef]
+                                                               # set_softly_to commands...
+                                                               ,"~"            => [undef , 0x10  , 0x11  , 0x12  , 0x13  , 0x21 ]
                                                                }
 
-                                      ,"cmd_timer"          => {"toggle_R"    => 0x04
-                                                               ,"toggle_G"    => 0x05
-                                                               ,"toggle_B"    => 0x06
-                                                               ,"toggle_M"    => 0x07
+                                      ,"cmd_timer"          => {"=toggle"      => [undef , 0x04  , 0x05  , 0x06  , 0x07  , undef]
                                                                }
 
-                                      ,"cmd_plain"          => {"stop_R"      => 0x14
-                                                               ,"stop_G"      => 0x15
-                                                               ,"stop_B"      => 0x16
-                                                               ,"stop_M"      => 0x17
+                                      ,"cmd_plain"          => {"=stop"        => [undef , 0x14  , 0x15  , 0x16  , 0x17  , undef]
+                                                               ,"=start"       => [undef , 0x18  , 0x19  , 0x1A  , 0x1B  , undef]
 
-                                                               ,"start_R"     => 0x18
-                                                               ,"start_G"     => 0x19
-                                                               ,"start_B"     => 0x1A
-                                                               ,"start_M"     => 0x1B
-
-                                                               ,"RGBspeed+"   => 0x23
-                                                               ,"RGBspeed-"   => 0x24
+                                                               ,".speed+"      => [undef , undef , undef , undef , undef , 0x23 ]
+                                                               ,".speed-"      => [undef , undef , undef , undef , undef , 0x24 ]
                                                                }
 
-                                      ,"cmd_value"          => {"Rspeed="     => 0x1C
-                                                               ,"Gspeed="     => 0x1D
-                                                               ,"Bspeed="     => 0x1E
-                                                               ,"Mspeed="     => 0x1F
-                                                               ,"RGBspeed="   => 0x22
+                                      ,"cmd_value"          => {".speed="      => [undef , 0x1C  , 0x1D  , 0x1E  , 0x1F  , 0x22 ]
                                                                }
 
-                                      ,"cmd_3value_timer"   => {# set to commands...
-                                                                "RGB="        => 0x20
-                                                               ,"RGB~"        => 0x21
+                                      ,"prg"                => {".PRGstop"     => [undef , undef , undef , undef , undef , [0x25 , 0x00]]
+                                                               ,".PRG1"        => [undef , undef , undef , undef , undef , [0x25 , 0x01]]
+                                                               ,".PRG2"        => [undef , undef , undef , undef , undef , [0x25 , 0x02]]
                                                                }
 
-                                      ,"prg"                => {"PRGstop"     => [0x25 , 0x00]
-                                                               ,"PRG1"        => [0x25 , 0x01]
-                                                               ,"PRG2"        => [0x25 , 0x02]
+                                      ,"box_command"        => {"=ENABLE"      => 0xDD
+                                                               ,"=DISABLE"     => 0xDE
+                                                               ,"=TOGGLE"      => 0xDF
                                                                }
 
-                                      ,"box_command"        => {"ENABLE_BOX"  => 0xDD
-                                                               ,"DISABLE_BOX" => 0xDE
-                                                               ,"TOGGLE_BOX"  => 0xDF
+                                      ,"box_state"          => {"enabled"      => 0x01
+                                                               ,"disabled"     => 0x00
                                                                }
 
-                                      ,"box_state"          => {"enabled"     => 0x01
-                                                               ,"disabled"    => 0x00
+                                      ,"version"            => {0x00           => "rev0"
                                                                }
 
-                                      ,"version"            => {0x00          => "rev0"
-                                                               }
-
-                                      ,"state_memory"       => {"yes"         => 0x01
-                                                               ,"no"          => 0x00
+                                      ,"state_memory"       => {"yes"          => 0x01
+                                                               ,"no"           => 0x00
                                                                }
                                       }
              };
@@ -226,7 +192,9 @@ sub get_id {
 
 # assign symbolic name on port...
 sub port_name {
-  my ($self , $port , $port_name) = @_;
+  my ($self , $spec) = @_;
+
+  my ($port , $port_name) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : illegal port '%s'.\n", $port;
@@ -236,11 +204,15 @@ sub port_name {
     printf STDERR "ERROR : port_name '%s' is not unique.\n", $port_name;
     Carp::confess();
   }
-  else {
+  elsif ($port_name =~ m/^[a-zA-Z_][a-zA-Z0-9_]*$/) {
     my $port = $self->{"legal"}->{"port"}->{$port};
 
     $self->{"legal"}->{"port"     }->{$port_name} = $port;
     $self->{"value"}->{"port_name"}->{$port     } = $port_name;
+  }
+  else {
+    printf STDERR "ERROR : port_name '%s' is illegal.\n", $port_name;
+    Carp::confess();
   }
 
   return $self;
@@ -259,27 +231,39 @@ sub notes {
 #=======================================================================================================================
 
 sub powerup_value {
-  my ($self , $port , $value_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
-    Carp::confess();
-  }
-  else  {
-    $port = $self->{"legal"}->{"port"}->{$port};
+  if (exists(  $self->{"legal"}->{"port"}->{$name})) {
+    my $port = $self->{"legal"}->{"port"}->{$name};
+    my @port;
 
-    if ($value_spec =~ m/^(\d+)$/) {
-      $self->{"value"}->{"powerup_value"}->{$port} = $value_spec;
-      $self->{"value"}->{"powerup_last" }->{$port} = 0x00;
-    }
-    elsif ($value_spec eq "last") {
-      $self->{"value"}->{"powerup_value"}->{$port} = 0x00;
-      $self->{"value"}->{"powerup_last" }->{$port} = 0x01 << ($port-1);
+    if ($port == 5) {
+      # all rgb ports...
+      @port = (1 , 2 , 3);
     }
     else {
-      printf STDERR "ERROR : illegal powerup value specification '%s'.\n", $value_spec;
-      Carp::confess();
+      @port = ($port);
     }
+
+    foreach my $port (@port) {
+      if ($value =~ m/^(\d+)$/) {
+        $self->{"value"}->{"powerup_value"}->{$port} = $value;
+        $self->{"value"}->{"powerup_last" }->{$port} = 0x00;
+      }
+      elsif ($value eq "last") {
+        $self->{"value"}->{"powerup_value"}->{$port} = 0x00;
+        $self->{"value"}->{"powerup_last" }->{$port} = 0x01 << ($port-1);
+      }
+      else {
+        printf STDERR "ERROR : illegal powerup value specification '%s'.\n", $value;
+        Carp::confess();
+      }
+    }
+  }
+  else  {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
+    Carp::confess();
   }
 
   return $self;
@@ -288,20 +272,25 @@ sub powerup_value {
 #=======================================================================================================================
 
 sub dimming_time {
-  my ($self , $port , $time_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
+  if (!exists($self->{"legal"}->{"port"}->{$name})) {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
     Carp::confess();
   }
-  elsif ($time_spec !~ m/^(\d+)$/) {
-    printf STDERR "ERROR : illegal time specification '%s'.\n", $time_spec;
+  elsif ($value !~ m/^(\d+)$/) {
+    printf STDERR "ERROR : illegal time specification '%s'.\n", $value;
     Carp::confess();
   }
   else {
-    $port = $self->{"legal"}->{"port"}->{$port};
+    my $port = $self->{"legal"}->{"port"}->{$name};
 
-    $self->{"value"}->{"dimming_time"}->{$port} = $time_spec;
+    if ($value > 0) {
+      $value -= 1;   # 0..255 = 1..256 sec
+    }
+
+    $self->{"value"}->{"dimming_time"}->{$port} = $value;
   }
 
   return $self;
@@ -310,20 +299,21 @@ sub dimming_time {
 #=======================================================================================================================
 
 sub min_value {
-  my ($self , $port , $value_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
+  if (!exists($self->{"legal"}->{"port"}->{$name})) {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
     Carp::confess();
   }
-  elsif ($value_spec !~ m/^(\d+)$/) {
-    printf STDERR "ERROR : illegal min-value specification '%s'.\n", $value_spec;
+  elsif ($value !~ m/^(\d+)$/) {
+    printf STDERR "ERROR : illegal min-value specification '%s'.\n", $value;
     Carp::confess();
   }
   else {
-    $port = $self->{"legal"}->{"port"}->{$port};
+    my $port = $self->{"legal"}->{"port"}->{$name};
 
-    $self->{"value"}->{"min_value"}->{$port} = $value_spec;
+    $self->{"value"}->{"min_value"}->{$port} = $value;
   }
 
   return $self;
@@ -332,20 +322,21 @@ sub min_value {
 #=======================================================================================================================
 
 sub max_value {
-  my ($self , $port , $value_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
+  if (!exists($self->{"legal"}->{"port"}->{$name})) {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
     Carp::confess();
   }
-  elsif ($value_spec !~ m/^(\d+)$/) {
-    printf STDERR "ERROR : illegal max-value specification '%s'.\n", $value_spec;
+  elsif ($value !~ m/^(\d+)$/) {
+    printf STDERR "ERROR : illegal max-value specification '%s'.\n", $value;
     Carp::confess();
   }
   else {
-    $port = $self->{"legal"}->{"port"}->{$port};
+    my $port = $self->{"legal"}->{"port"}->{$name};
 
-    $self->{"value"}->{"max_value"}->{$port} = $value_spec;
+    $self->{"value"}->{"max_value"}->{$port} = $value;
   }
 
   return $self;
@@ -354,20 +345,21 @@ sub max_value {
 #=======================================================================================================================
 
 sub state_memory {
-  my ($self , $port , $state_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
+  if (!exists($self->{"legal"}->{"port"}->{$name})) {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
     Carp::confess();
   }
-  elsif (!exists($self->{"legal"}->{"state_memory"}->{$state_spec})) {
-    printf STDERR "ERROR : illegal state-memory specification '%s'.\n", $state_spec;
+  elsif (!exists($self->{"legal"}->{"state_memory"}->{$value})) {
+    printf STDERR "ERROR : illegal state-memory specification '%s'.\n", $value;
     Carp::confess();
   }
   else {
-    $port = $self->{"legal"}->{"port"}->{$port};
+    my $port = $self->{"legal"}->{"port"}->{$name};
 
-    $self->{"value"}->{"state_memory"}->{$port} = $self->{"legal"}->{"state_memory"}->{$state_spec} << ($port-1);
+    $self->{"value"}->{"state_memory"}->{$port} = $self->{"legal"}->{"state_memory"}->{$value} << ($port-1);
   }
 
   return $self;
@@ -381,7 +373,7 @@ sub message {
   if (exists(    $self->{"legal"}->{"relay_event"}->{$event_spec})) {
     if (exists(  $self->{"legal"}->{"port"       }->{$opt       })) {
 
-      # format relay frame and register centrally that other can refer to it...
+      # format dimmer message and register centrally that other can refer to it...
       my @message = (0x30,0x80
                     ,$self->{"value"}->{"node_number"}
                     ,$self->{"value"}->{"node_group"}
@@ -428,13 +420,17 @@ sub send {
 sub box {
   my ($self
      ,$state        # enabled/disabled
+     ,$trigger      # message
      ,$command      # one of many
-     ,@opt
+     ,$group_list   # (optional)
      ) = @_;
 
-  my $box_group;
-  my $trigger;
-  my $group_list;
+
+  my $par = $command;
+
+  if (defined($group_list)) {
+    $par .= " , ".$group_list;
+  }
 
   my $box_state;
   my $INSTR1 = 0x00;
@@ -459,7 +455,11 @@ sub box {
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   my $timer = 0;
+  my $name;
+  my $box_group;
+  my @value;
 
+  # some commands allow delayed execution...
   if ($command =~ m/^(.+)#([0-9]+)$/) {
     $command = $1;
     $timer   = $2;
@@ -467,62 +467,85 @@ sub box {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  my @value;
-
-  if ($command =~ m/^(.+?)(\=|\~|\+\=|\-\=)(.+)$/) {
-    $command = $1.$2;
-    @value   = split(/\s,\s/ , $3);
+  if ($command =~ m/^([a-zA-Z0-9_]+)(.+)$/ ) {
+    $name    = $1;
+    $command = $2;
   }
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  if (exists( $self->{"legal"}->{"cmd_value_timer"}->{$command})) {
-    $INSTR1 = $self->{"legal"}->{"cmd_value_timer"}->{$command};
-    $INSTR2 = $value[0];
-    $INSTR3 = $timer;
+  if ($command =~ m/^(.*[~=])([\d,]+)$/ ) {
+    $command = $1;
+    @value   = split(/,/ , $2);
+  }
 
-    ($trigger , $group_list) = @opt;
+  my $port = $self->{"legal"}->{"port"}->{$name};
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  if (exists ($self->{"legal"}->{"cmd_value_timer"}->{$command})
+      &&
+      defined($port)
+      &&
+      defined($self->{"legal"}->{"cmd_value_timer"}->{$command}->[$port])
+  ) {
+    $INSTR1 = $self->{"legal"}->{"cmd_value_timer"}->{$command}->[$port];
+
+    if ($port == 5) {
+      # rgb command...
+      $INSTR2 = $value[0];
+      $INSTR3 = $value[1];
+      $INSTR4 = $value[2];
+      $INSTR5 = $timer;
+    }
+    else {
+      # single channel command...
+      $INSTR2 = $value[0];
+      $INSTR3 = $timer;
+    }
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  elsif (exists($self->{"legal"}->{"cmd_timer"}->{$command})) {
-    $INSTR1 =   $self->{"legal"}->{"cmd_timer"}->{$command};
-    $INSTR3 = $timer;
-
-    ($trigger , $group_list) = @opt;
+  elsif (exists ($self->{"legal"}->{"cmd_timer"}->{$command})
+         &&
+         defined($port)
+         &&
+         defined($self->{"legal"}->{"cmd_timer"}->{$command}->[$port])
+        )  {
+    $INSTR1 =    $self->{"legal"}->{"cmd_timer"}->{$command}->[$port];
+    $INSTR3 =    $timer;
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  elsif (exists($self->{"legal"}->{"cmd_plain"}->{$command})) {
-    $INSTR1 =   $self->{"legal"}->{"cmd_plain"}->{$command};
-
-    ($trigger , $group_list) = @opt;
+  elsif (exists ($self->{"legal"}->{"cmd_plain"}->{$command})
+         &&
+         defined($port)
+         &&
+         defined($self->{"legal"}->{"cmd_plain"}->{$command}->[$port])
+        )  {
+    $INSTR1 =    $self->{"legal"}->{"cmd_plain"}->{$command}->[$port];
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  elsif (exists($self->{"legal"}->{"cmd_value"}->{$command})) {
-    $INSTR1 =   $self->{"legal"}->{"cmd_value"}->{$command};
-    $INSTR2 = $value[0];
-
-    ($trigger , $group_list) = @opt;
+  elsif (exists ($self->{"legal"}->{"cmd_value"}->{$command})
+         &&
+         defined($port)
+         &&
+         defined($self->{"legal"}->{"cmd_value"}->{$command}->[$port])
+        )  {
+    $INSTR1 =    $self->{"legal"}->{"cmd_value"}->{$command}->[$port];
+    $INSTR2 =    $value[0];
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  elsif (exists($self->{"legal"}->{"cmd_3value_timer"}->{$command})) {
-    $INSTR1 =   $self->{"legal"}->{"cmd_3value_timer"}->{$command};
-    $INSTR2 = $value[0];
-    $INSTR3 = $value[1];
-    $INSTR4 = $value[2];
-    $INSTR5 = $timer;
-
-    ($trigger , $group_list) = @opt;
-  }
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  elsif (exists           ($self->{"legal"}->{"prg"}->{$command})) {
-    ($INSTR1, $INSTR2) = @{$self->{"legal"}->{"prg"}->{$command}};
-
-    ($trigger , $group_list) = @opt;
+  elsif (exists ($self->{"legal"}->{"prg"      }->{$command})
+         &&
+         defined($port)
+         &&
+         defined($self->{"legal"}->{"prg"      }->{$command}->[$port])
+        )  {
+    $INSTR1    = $self->{"legal"}->{"prg"      }->{$command}->[$port]->[0];
+    $INSTR2    = $self->{"legal"}->{"prg"      }->{$command}->[$port]->[1];
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   elsif (exists($self->{"legal"}->{"box_command"}->{$command})) {
     $INSTR1 =   $self->{"legal"}->{"box_command"}->{$command};
 
-    ($box_group , $trigger , $group_list) = @opt;
+    $box_group=$name;
 
     if (!exists($self->{"value"}->{"box_group"}->{$box_group})) {
       printf STDERR "ERROR : unknown box_group '%s'.\n", $box_group;
@@ -564,10 +587,9 @@ sub box {
     }
   }
 
-  my $doc = sprintf("%s %-15s %-20s %s"
+  my $doc = sprintf("%s %-20s %s"
                    ,$state
-                   ,$command
-                   ,join(" , " , @opt)
+                   ,$par
                    ,join(" " , map {if (defined($_)) {
                                       sprintf("=%02X",$_);
                                     }
@@ -645,7 +667,7 @@ sub flash {
     }
   }
 
-  if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a button module of correct version.\n"}
+  if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a RGB_LED module of correct version.\n"}
   else {printf STDERR $msg;$msg = ""}
 
   if ($msg eq "pass") {$msg = HAPCONF::util::one_node_enter_programming_mode($project , $number , $group)}
@@ -666,12 +688,12 @@ sub flash {
     printf STDERR "INFO : writing setup info to EEPROM...\n";
     push(@data , $self->{"value"}->{"min_value"}->{1}); # R.min
     push(@data , $self->{"value"}->{"max_value"}->{1}); # R.max
-    push(@data , $self->{"value"}->{"min_value"}->{2}); # R.min
-    push(@data , $self->{"value"}->{"max_value"}->{2}); # R.max
-    push(@data , $self->{"value"}->{"min_value"}->{3}); # R.min
-    push(@data , $self->{"value"}->{"max_value"}->{3}); # R.max
-    push(@data , $self->{"value"}->{"min_value"}->{4}); # R.min
-    push(@data , $self->{"value"}->{"max_value"}->{4}); # R.max
+    push(@data , $self->{"value"}->{"min_value"}->{2}); # G.min
+    push(@data , $self->{"value"}->{"max_value"}->{2}); # G.max
+    push(@data , $self->{"value"}->{"min_value"}->{3}); # B.min
+    push(@data , $self->{"value"}->{"max_value"}->{3}); # B.max
+    push(@data , $self->{"value"}->{"min_value"}->{4}); # M.min
+    push(@data , $self->{"value"}->{"max_value"}->{4}); # M.max
 
     push(@data , $self->{"value"}->{"powerup_value"}->{1}); # R - channel 1 set power up state
     push(@data , 0x00                                    ); # R - channel 1 last saved in eeprom state

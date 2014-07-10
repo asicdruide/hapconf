@@ -115,6 +115,8 @@ sub new {
                                            }
                                   ,0x08 => {0x00 => "rgb led controller"
                                            }
+                                  ,102  => {0x00 => "ethernet interface"
+                                           }
                                   }
              };
   bless($self , $class);
@@ -129,7 +131,7 @@ sub new {
 sub ethernet {
   my ($name) = @_;
 
-  my $ethernet = HAPCONF::ethernet->new($project , $name);
+  my $ethernet = HAPCONF::ethernet->new($project , $name , 0);
 
   return $ethernet;
 }

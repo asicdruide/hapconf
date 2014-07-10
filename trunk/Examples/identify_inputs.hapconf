@@ -16,19 +16,19 @@ ethernet            ("eth")
 button_back_box13   ("bbb")
   ->id              (6 , 8)
                     # message name            event     port
-  ->message         ("a"                    , "c"     , 1 )
-  ->message         ("b"                    , "c"     , 2 )
-  ->message         ("c"                    , "c"     , 3 )
-  ->message         ("d"                    , "c"     , 4 )
-  ->message         ("e"                    , "c"     , 5 )
-  ->message         ("f"                    , "c"     , 6 )
-  ->message         ("g"                    , "c"     , 7 )
-  ->message         ("h"                    , "c"     , 8 )
-  ->message         ("i"                    , "c"     , 9 )
-  ->message         ("j"                    , "c"     , 10)
-  ->message         ("k"                    , "c"     , 11)
-  ->message         ("l"                    , "c"     , 12)
-  ->message         ("m"                    , "c"     , 13)
+  ->message         ("a"                    ,  "1:c")
+  ->message         ("b"                    ,  "2:c")
+  ->message         ("c"                    ,  "3:c")
+  ->message         ("d"                    ,  "4:c")
+  ->message         ("e"                    ,  "5:c")
+  ->message         ("f"                    ,  "6:c")
+  ->message         ("g"                    ,  "7:c")
+  ->message         ("h"                    ,  "8:c")
+  ->message         ("i"                    ,  "9:c")
+  ->message         ("j"                    , "10:c")
+  ->message         ("k"                    , "11:c")
+  ->message         ("l"                    , "12:c")
+  ->message         ("m"                    , "13:c")
 ;
 
 relay_bistable_NO   ("relay")
@@ -44,6 +44,13 @@ led_rgb             ("dimmer")
 ;
 
 connect();
+
+printf "flash configuration into modules? (yN) : ";
+my $answer = <STDIN>;
+
+if ($answer =~ m/^[jJyY]$/) {
+  flash_fast("bbb");
+}
 
 # now we can press buttons and note which one is connected to which port...
 trace_CAN();

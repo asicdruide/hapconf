@@ -30,21 +30,52 @@ package HAPCONF::ethernet;
 #=======================================================================================================================
 
 sub new {
-  my ($class 
+  my ($class
      ,$project
      ,$name
+     ,$version
      ) = @_;
-  
+
   $name = HAPCONF::util::check_name($name , "name");
 
-  my $self = {"project"     => $project
-             ,"name"        => $name
-             ,"node_number" => undef
-             ,"node_group"  => undef
-             ,"url"         => undef
-             ,"schedule"    => []               # 128 times enable/time_spec/CAN message
-             ,"notes"       => undef
+  if (!defined($version)) {
+    printf STDERR "ERROR : undefined version not allowed.\n";
+    Carp::confess();
+  }
+
+  my $self = {"project"            => $project
+             ,"value"              => {"name"                  => $name
+                                      ,"version"               => $version
+                                      ,"node_number"           => undef
+                                      ,"node_group"            => undef
+                                      ,"node_type"             => "???"
+
+                                      # indirect control table...
+                                      ,"box"                   => []
+
+                                      ,"notes"                 => []
+                                      ,"schedule"              => []
+
+                                      ,"box_group"             => {}
+
+                                      }
+
+             ,"legal"              => {# default port names...
+                                      # symbolic indirect control commands...
+                                       "box_command"        => {"ENABLE_BOX"          => 0xDD
+                                                               ,"DISABLE_BOX"         => 0xDE
+                                                               ,"TOGGLE_BOX"          => 0xDF
+                                                               }
+
+                                      ,"box_state"          => {"enabled"             => 0x01
+                                                               ,"disabled"            => 0x00
+                                                               }
+
+                                      ,"version"            => {0x00                  => "ethernet interface"
+                                                               }
+                                      }
              };
+
   bless($self , $class);
 
   # register ourself...
@@ -52,7 +83,7 @@ sub new {
 
   ## register our message-decoder...
   #$project->add_decoder(0x300 , \&decode_clock_message , $self);
-  
+
   return $self;
 }
 
@@ -60,13 +91,13 @@ sub new {
 
 sub id {
   my ($self , $node_number , $node_group) = @_;
-  
+
   $node_number = HAPCONF::util::check_number($node_number , "node_number");
   $node_group  = HAPCONF::util::check_number($node_group  , "node_group" );
 
   $self->{"value"}->{"node_number"} = $node_number;
   $self->{"value"}->{"node_group" } = $node_group;
-  
+
   $self->{"project"}->set_node_id($self->{"value"}->{"name"} , $node_number , $node_group);
 
   return $self;
@@ -76,8 +107,8 @@ sub id {
 
 sub url {
   my ($self , $url) = @_;
-  
-  $self->{"url"} = HAPCONF::util::check_url($url , "url");
+
+  $self->{"value"}->{"url"} = HAPCONF::util::check_url($url , "url");
 
   return $self;
 }
@@ -86,7 +117,7 @@ sub url {
 
 sub schedule {
   my ($self , $schedule) = @_;
-  
+
   push(@{$self->{"schedule"}} , $schedule);
 
   return $self;
@@ -96,7 +127,7 @@ sub schedule {
 
 sub get_id {
   my ($self) = @_;
-  
+
   return ($self->{"node_number"} , $self->{"node_group"});
 }
 
@@ -104,22 +135,22 @@ sub get_id {
 
 sub get_url {
   my ($self) = @_;
-  
-  return $self->{"url"};
+
+  return $self->{"value"}->{"url"};
 }
 
 # ======================================================================================================================
 
 sub message_decoder {
   my ($self , @message) = @_;
-  
+
   my $result = "";
 
   my ($frame_type , $response_flag , $number , $group) = HAPCONF::util::message_header(@message);
 
   # ethernet does not has an id...
   if ($frame_type == 0x300) {$result = $self->decode_clock_message(@message)}
-    
+
   return $result;
 }
 
@@ -127,7 +158,7 @@ sub message_decoder {
 
 sub decode_clock_message {
   my ($self , @message) = @_;
-  
+
   my $year    = sprintf("%s%s" , ($message[ 6] & 0xF0) >> 4 , $message[ 6] & 0x0F);
   my $month   = sprintf("%s%s" , ($message[ 7] & 0xF0) >> 4 , $message[ 7] & 0x0F);
   my $day     = sprintf("%s%s" , ($message[ 8] & 0xF0) >> 4 , $message[ 8] & 0x0F);
@@ -136,14 +167,14 @@ sub decode_clock_message {
   my $second  = sprintf("%s%s" , ($message[12] & 0xF0) >> 4 , $message[12] & 0x0F);
 
   my $result = sprintf("RTC %s-%s-%s %s:%s:%s"
-                      ,$year  
-                      ,$month 
-                      ,$day   
-                      ,$hour  
+                      ,$year
+                      ,$month
+                      ,$day
+                      ,$hour
                       ,$minute
                       ,$second
                       );
-  
+
   return $result;
 }
 

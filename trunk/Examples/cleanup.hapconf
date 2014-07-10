@@ -13,6 +13,7 @@ my $project = HAPCONF->new("eval_board");
 begin_log("TxCAN" , "RxCAN");
 
 ethernet            ("eth")
+  ->id              (1 , 8)
   ->url             ("192.168.0.100:1001")
 ;
 
@@ -34,7 +35,7 @@ ir_rx_tx            ("IR")
 
 
 connect();
-
+#reboot("led");
 #exit_programming_mode("bbb" , "relay" , "led" , "IR");
 #
 #sleep(2);   # modules need some time to recover...
@@ -45,8 +46,8 @@ connect();
 #
 #uptime               ("bbb" , "relay" , "led" , "IR");
 
-#status               ("bbb" , "relay" , "led" , "IR");
-health_check         ("bbb" );
+status               ("bbb" , "relay" , "led" , "IR");
+#health_check         ("bbb" );
 #health_check         ("relay");
 #health_check         ("led");
 #health_check         ("IR");

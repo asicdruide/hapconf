@@ -37,7 +37,7 @@ my $node = node("relay");
 foreach my $port (1..6) {
   printf "INFO : port:%d\n", $port;
   foreach my $i (0..3) {
-    $node->send("toggle" , $port);
+    $node->send($port."=toggle");
     sleep(1);
   }
 }

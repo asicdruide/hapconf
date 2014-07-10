@@ -224,61 +224,6 @@ sub RxFlush {
 
 # ======================================================================================================================
 
-#      sub RxWait {
-#        my ($project , @exp_byte) = @_;
-#
-#        unshift(@exp_byte , 0xAA);             # start
-#        push   (@exp_byte , undef);            # CHKSUM
-#        push   (@exp_byte , 0xA5);             # stop
-#
-#        my $socket = $project->{"socket"};
-#        my $select = $project->{"select"};
-#        my $result;
-#        my $timeout;
-#
-#        do {
-#          my @can_read = $select->can_read(10);
-#          my $rx;
-#
-#          if (scalar(@can_read)==0) {
-#            $timeout = 1;
-#            $result  = "FAIL";
-#          }
-#          else {
-#            $timeout = 0;
-#            $socket->read($rx , 15);
-#
-#            my @rx_byte = map {ord(substr($rx , $_ , 1))} (0..14);
-#
-#            my $log = "Rx :";
-#
-#            $result = "pass";
-#
-#            foreach my $i (0..14) {
-#              $log .= sprintf(" %02X" , $rx_byte[$i]);
-#
-#              if (defined($exp_byte[$i])
-#                  &&
-#                  $exp_byte[$i] != $rx_byte[$i]) {
-#                # fail...
-#                $result = "FAIL";
-#              }
-#            }
-#
-#            printf "%s %s %s\n"
-#                   ,$log
-#                   ,$result
-#                   ,$project->decode_message(@rx_byte);
-#          }
-#        } until ($result eq "pass" || $timeout==1);
-#
-#        if ($timeout==1) {
-#          printf "ERROR : timeout!\n";
-#        }
-#      }
-
-# ======================================================================================================================
-
 sub Rx {
   my ($project , $timeout , @exp_byte) = @_;
 
@@ -691,8 +636,18 @@ sub one_node_health_check {
     ,0x00    , 0x00    # don't care
     );
 
+  Tx($project
+    ,"one node health check request"
+    ,0x11    , 0x50    # one node exit programming mode
+    ,0x00    , 0x00    # sender
+    ,0x01    , 0x00    # status request, don't care
+    ,$number , $group  # receiver
+    ,0x00    , 0x00    # don't care
+    ,0x00    , 0x00    # don't care
+    );
+
   my ($msg1 , @tmp1) = Rx($project
-                         ,5.0               # timeout
+                         ,20                # timeout
                          ,0x11    , 0x51    #
                          ,$number , $group  # responder
                          ,undef   , undef   # frame1     , RXCNT
@@ -702,7 +657,7 @@ sub one_node_health_check {
                          );
 
   my ($msg2 , @tmp2) = Rx($project
-                         ,5.0               # timeout
+                         ,20                # timeout
                          ,0x11    , 0x51    #
                          ,$number , $group  # responder
                          ,undef   , undef   # frame2     , don't care
@@ -715,19 +670,18 @@ sub one_node_health_check {
 
   if ($msg1 eq "pass" && $msg2 eq "pass") {
 
-    if ($result{"msg"} eq "pass") {
-      my %result1 = decode_health_check_message(@byte1);
+    %result = decode_health_check_message(@tmp1);
 
+    my %result2 = decode_health_check_message(@tmp2);
 
-      $result{"RXCNTMXE"   } = $byte2[ 8];
-      $result{"TXCNTMXE"   } = $byte2[ 9];
-      $result{"CANINTCNTE" } = $byte2[10];
-      $result{"RXERRCNTE"  } = $byte2[11];
-      $result{"TXERRCNTE"  } = $byte2[12];
+    $result{"msg"} = "pass";
+
+    foreach my $key (keys %result2) {
+      $result{$key} = $result2{$key};
     }
   }
   elsif ($msg1 eq "timeout" || $msg2 eq "timeout") {
-    $result{"msg"  } = "ERROR : no node health check response during timeout";
+    $result{"msg"} = "ERROR : no node health check response during timeout";
   }
 
   return %result;
@@ -1110,6 +1064,7 @@ sub Flash_erase {
       ,0x03                     # cmd:0x03=erase
       ,0x00    , 0x00           # don't care
     );
+    printf "a";
 
     my ($Amsg) = Rx($project
                    ,10                       # timeout 10sec
@@ -1121,7 +1076,10 @@ sub Flash_erase {
                    ,0x00 , 0x00              # don't care
                    );
 
-    if ($Amsg ne "pass") {
+    if ($Amsg eq "pass") {
+      printf "A";
+    }
+    else {
       return sprintf("ERROR : no or incorrect response after setting flash address 0x%06X\n", $address);
     }
 
@@ -1138,6 +1096,7 @@ sub Flash_erase {
       ,0x00                     # A+6
       ,0x00                     # A+7
     );
+    printf "e";
 
     my ($Dmsg) = Rx($project
                    ,10                       # timeout 1sec
@@ -1153,7 +1112,10 @@ sub Flash_erase {
                    ,0xFF                    # A+7
                    );
 
-    if ($Dmsg ne "pass") {
+    if ($Dmsg eq "pass") {
+      printf "E";
+    }
+    else {
       return sprintf("ERROR : no or incorrect response after erasing data\n");
     }
   }
@@ -1168,7 +1130,7 @@ sub Flash_write {
 
   # pad data to fill a whole flash-write-block...
   while ((scalar(@data) % 64) != 0) {
-    push(@data , 0x00);
+    push(@data , 0xFF);
   }
 
   if ($base_address < 0x008000) {
@@ -1217,9 +1179,10 @@ sub Flash_write {
         ,0x02                     # cmd:0x02=write
         ,0x00    , 0x00           # don't care
       );
+      printf "a";
 
       my ($Amsg) = Rx($project
-                     ,10                       # timeout 10sec
+                     ,20                       # timeout
                      ,0x03 , 0x01              # frame type
                      ,$number , $group         # responder
                      ,$ADRU   , $ADRH , $ADRL  # address
@@ -1228,8 +1191,11 @@ sub Flash_write {
                      ,0x00 , 0x00              # don't care
                      );
 
-      if ($Amsg ne "pass") {
-        return sprintf("ERROR : no or incorrect response after setting flash address 0x%06X\n", $address);
+      if ($Amsg eq "pass") {
+        printf "A";
+      }
+      else {
+        return sprintf("\nERROR : no or incorrect response after setting flash address 0x%06X<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n", $address);
       }
 
       Tx($project
@@ -1245,9 +1211,10 @@ sub Flash_write {
         ,$data[$offset+6]         # A+6
         ,$data[$offset+7]         # A+7
       );
+      printf "d";
 
       my ($Dmsg) = Rx($project
-                     ,10                       # timeout 10sec
+                     ,20                       # timeout
                      ,0x04 , 0x01              # frame type
                      ,$number , $group         # responder
                      ,$data[$offset+0]         # A+0
@@ -1260,11 +1227,20 @@ sub Flash_write {
                      ,$data[$offset+7]         # A+7
                      );
 
-      if ($Dmsg ne "pass") {
-        return sprintf("ERROR : no or incorrect response after writing flash data\n");
+      if ($Dmsg eq "pass") {
+        printf "D";
+      }
+      else {
+        return sprintf("\nERROR : no or incorrect response after writing flash data<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
       }
     }
+
+    if (($block % 4) == 3) {
+      sleep(1);
+    }
   }
+
+  printf "\n";
 
   return "pass";
 }

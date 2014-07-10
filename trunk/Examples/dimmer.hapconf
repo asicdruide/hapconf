@@ -12,109 +12,200 @@ my $project = HAPCONF->new("eval_board");
 #begin_log("TxCAN" , "RxCAN");
 
 ethernet                 ("eth")
+  ->id                   (1 , 8)
   ->url                  ("192.168.0.100:1001")
 ;
 
 button_back_box13        ("bbb")
-  ->id                   (6 , 8)
-                         # message name            event     port
-  # UI1 : separate up-down button
-  ->message              ("dim1_off"             , "co"    , 1 )
-  ->message              ("dim1_down"            , "c="    , 1 )
-  ->message              ("dim1_down_stop"       , "o"     , 1 )
+  ->id                   ( 6 , 8)
 
-  ->message              ("dim1_on"              , "co"    , 2 )
-  ->message              ("dim1_up"              , "c="    , 2 )
-  ->message              ("dim1_up_stop"         , "o"     , 2 )
+  ->port_name            ( "1=B1" )
+  ->port_name            ( "2=B2" )
+  ->port_name            ( "3=B3" )
+  ->port_name            ( "4=B4" )
+  ->port_name            ( "5=B5" )
+  ->port_name            ( "6=B6" )
+  ->port_name            ( "7=B7" )
+  ->port_name            ( "8=B8" )
+  ->port_name            ( "9=B9" )
+  ->port_name            ("10=B10")
+  ->port_name            ("11=B11")
+  ->port_name            ("12=B12")
+  ->port_name            ("13=B13")
+
+  # UI1 : separate up-down buttons
+                         # message name            port:event
+  ->message              ("dim1_off"             , "B1:co")
+  ->message              ("dim1_down"            , "B1:ch")
+  ->message              ("dim1_down_stop"       , "B1:o" )
+
+  ->message              ("dim1_on"              , "B2:co")
+  ->message              ("dim1_up"              , "B2:ch")
+  ->message              ("dim1_up_stop"         , "B2:o" )
 
   # UI2 :  single button
-  ->message              ("dim2_start"           , "c"     , 7 )
-  ->message              ("dim2_stop"            , "o"     , 7 )
+  ->message              ("dim2_start"           , "B7:c" )
+  ->message              ("dim2_stop"            , "B7:o" )
 
   # UI3 : attached to switch (different value dependinng on time-of-day)...
-  ->message              ("dim3_on"              , "c"     , 10 )
-  ->message              ("dim3_off"             , "o"     , 10 )
+  ->message              ("dim3_on"              , "B10:c")
+  ->message              ("dim3_off"             , "B10:o")
 
   # switches between day and night...
-  ->message              ("day"                  , "c"     , 12 )
-  ->message              ("night"                , "o"     , 12 )
+  ->message              ("day"                  , "B12:c")
+  ->message              ("night"                , "B12:o")
 
   # a central off button...
-  ->message              ("all_off"              , "c"     , 13)
-
-  # feedback for day/night...
-  ->box                  ("enabled" , "led_on"   , 8      , "day"                    )
-  ->box                  ("enabled" , "led_off"  , 8      , "night"                  )
+  ->message              ("all_off"              , "B13:c")
 
   ->notes                ("configured by hapconf")
+
   ->thermostat_threshold (22.0)
   ->thermostat_hysteresis( 1.0)
   ->temperature_offset   ( 0.0)
 ;
 
+
+
+
+
 ir_rx_tx                 ("IR")
   ->id                   (5 , 8)
-  ->message              ("dim2_startIR"         , "RC5-0-1-begin")
-  ->message              ("dim2_stopIR"          , "RC5-0-1-end"  )
+  ->message              ("dim1_upIR"            , "RC5-0-1-begin")
+  ->message              ("dim1_up_stopIR"       , "RC5-0-1-end"  )
+  ->message              ("dim1_downIR"          , "RC5-0-4-begin")
+  ->message              ("dim1_down_stopIR"     , "RC5-0-4-end"  )
+  ->message              ("dim1_onoffIR"         , "RC5-0-7-begin")
+
+  ->message              ("dim2_startIR"         , "RC5-0-2-begin")
+  ->message              ("dim2_stopIR"          , "RC5-0-2-end"  )
+
+  ->message              ("dim3_onIR"            , "RC5-0-3-begin")
+  ->message              ("dim3_offIR"           , "RC5-0-6-begin")
+
+  ->message              ("dayIR"                , "RC5-0-8-begin")
+  ->message              ("nightIR"              , "RC5-0-9-begin")
+
+  ->message              ("all_offIR"            , "RC5-0-0-begin")
+
+  ->notes                ("configured by hapconf")
 ;
+
+
+node("bbb")
+  #
+  # feedback for day/night...
+  #                                   trigger      action    optional grouplist
+  ->box                  ("enabled" , "day"      , "8=on" )
+  ->box                  ("enabled" , "night"    , "8=off")
+  ->box                  ("enabled" , "dayIR"    , "8=on" )
+  ->box                  ("enabled" , "nightIR"  , "8=off")
+;
+
 
 # not really needed for dimmer test scenarios...
 relay_bistable_NO        ("relay")
   ->id                   (3 , 8)
-                         # state      command             port list             trigger message
-  ->box                  ("enabled" , "turn_off" ,        "1,2,3,4,5,6" , "all_off")
+  ->notes                ("configured by hapconf")
+                         # state      trigger      action
+  ->box                  ("enabled" , "all_off" , "1,2,3,4,5,6=off" )
 ;
 
-led_rgb                  ("dimmer")
-  ->id                   (4 , 8)
-  ->port_name            ( 1   , "R" )
-  ->port_name            ( 2   , "G" )
-  ->port_name            ( 3   , "B" )
-  ->port_name            ( 4   , "M" )
-  ->dimming_time         ("R" , 4)
-  ->dimming_time         ("G" , 3)
-  ->dimming_time         ("B" , 5)
-  ->powerup_value        ("R" , 0)
-  ->powerup_value        ("G" , 0)
-  ->powerup_value        ("B" , 0)
-  ->powerup_value        ("M" , 0xFF)          # on, dimm commands should have immediate effect...
-  ->state_memory         ("R" , "yes")
-  ->state_memory         ("G" , "yes")
-  ->state_memory         ("B" , "yes")
-  ->state_memory         ("M" , "no" )
-  ->min_value            ("R" , 5)
+
+
+
+
+
+
+led_rgb                  ("dimmer"   )
+  ->id                   (4    , 8   )
+  ->port_name            ("R=L1")
+  ->port_name            ("G=L2")
+  ->port_name            ("B=L3")
+
+  ->dimming_time         ("L1=2")
+  ->dimming_time         ("L2=2")
+  ->dimming_time         ("L3=4")
+  ->dimming_time         ("M =1")
+
+  ->powerup_value        ("L1=  0")
+  ->powerup_value        ("L2=  0")
+  ->powerup_value        ("L3=  0")
+  ->powerup_value        ("M =255")          # on, dimm commands should have immediate effect...
+
+  ->state_memory         ("L1=yes")
+  ->state_memory         ("L2=yes")
+  ->state_memory         ("L3=no" )
+  ->state_memory         ("M =no" )
+
+  ->min_value            ("L1=  5")
+  ->min_value            ("L2=  5")
+  ->min_value            ("L3=  0")
+  ->min_value            ("M =255")
+
+  ->max_value            ("L1=255")
+  ->max_value            ("L2=255")
+  ->max_value            ("L3=255")
+  ->max_value            ("M =255")
+
+  ->notes                ("configured by hapconf")
 
   # UI1 : up-down button
-  ->box                  ("enabled" , "toggle_R"                              , "dim1_on"                    )
-  ->box                  ("enabled" , "R~255"                                 , "dim1_up"                    )
-  ->box                  ("enabled" , "stop_R"                                , "dim1_up_stop"               )
+  #                                   trigger message           action                        optional group
+  ->box                  ("enabled" , "dim1_on"               , "L1=toggle"                                 )
+  ->box                  ("enabled" , "dim1_up"               , "L1~255"                                    )
+  ->box                  ("enabled" , "dim1_up_stop"          , "L1=stop"                                   )
+  ->box                  ("enabled" , "dim1_off"              , "L1=toggle"                                 )
+  ->box                  ("enabled" , "dim1_down"             , "L1~5"                                      )
+  ->box                  ("enabled" , "dim1_down_stop"        , "L1=stop"                                   )
 
-  ->box                  ("enabled" , "toggle_R"                              , "dim1_off"                   )
-  ->box                  ("enabled" , "R~5"                                   , "dim1_down"                  )
-  ->box                  ("enabled" , "stop_R"                                , "dim1_down_stop"             )
-
+  ->box                  ("enabled" , "dim1_onoffIR"          , "L1=toggle"                                 )
+  ->box                  ("enabled" , "dim1_upIR"             , "L1~255"                                    )
+  ->box                  ("enabled" , "dim1_up_stopIR"        , "L1=stop"                                   )
+  ->box                  ("enabled" , "dim1_downIR"           , "L1~5"                                      )
+  ->box                  ("enabled" , "dim1_down_stopIR"      , "L1=stop"                                   )
 
   # UI2 :  single button
-  ->box                  ("enabled" , "start_G"                               , "dim2_start"                 )
-  ->box                  ("enabled" , "stop_G"                                , "dim2_stop"                  )
-  ->box                  ("enabled" , "start_G"                               , "dim2_startIR"               )
-  ->box                  ("enabled" , "stop_G"                                , "dim2_stopIR"                )
+  #                                   trigger message           action                        optional group
+  ->box                  ("enabled" , "dim2_start"            , "L2=start"                                  )
+  ->box                  ("enabled" , "dim2_stop"             , "L2=stop"                                   )
+  ->box                  ("enabled" , "dim2_startIR"          , "L2=start"                                  )
+  ->box                  ("enabled" , "dim2_stopIR"           , "L2=stop"                                   )
 
   # UI3 : attached to switch (different value depending on time-of-day)...
-  ->box                  ("disabled", "B=255"                                 , "dim3_on"     , "group_day"  )
-  ->box                  ("disabled", "B=0"                                   , "dim3_off"    , "group_day"  )
-  ->box                  ("enabled" , "B~16"                                  , "dim3_on"     , "group_night")
-  ->box                  ("enabled" , "B~0"                                   , "dim3_off"    , "group_night")
+  #                                   trigger message           action                        optional group
+  ->box                  ("disabled", "dim3_on"               , "L3=255"                    , "group_day"   )
+  ->box                  ("disabled", "dim3_off"              , "L3=0"                      , "group_day"   )
+  ->box                  ("disabled", "dim3_onIR"             , "L3=255"                    , "group_day"   )
+  ->box                  ("disabled", "dim3_offIR"            , "L3=0"                      , "group_day"   )
 
-  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_day"             , "day"                        )
-  ->box                  ("enabled" , "DISABLE_BOX" , "group_night"           , "day"                        )
-  ->box                  ("enabled" ,  "ENABLE_BOX" , "group_night"           , "night"                      )
-  ->box                  ("enabled" , "DISABLE_BOX" , "group_day"             , "night"                      )
+  ->box                  ("enabled" , "dim3_on"               , "L3~16"                     , "group_night" )
+  ->box                  ("enabled" , "dim3_off"              , "L3~0"                      , "group_night" )
+  ->box                  ("enabled" , "dim3_onIR"             , "L3~16"                     , "group_night" )
+  ->box                  ("enabled" , "dim3_offIR"            , "L3~0"                      , "group_night" )
+
+  ->box                  ("enabled" , "day"                   ,   "group_day=ENABLE"                        )
+  ->box                  ("enabled" , "day"                   , "group_night=DISABLE"                       )
+  ->box                  ("enabled" , "night"                 , "group_night=ENABLE"                        )
+  ->box                  ("enabled" , "night"                 ,   "group_day=DISABLE"                       )
+
+  ->box                  ("enabled" , "dayIR"                 ,   "group_day=ENABLE"                        )
+  ->box                  ("enabled" , "dayIR"                 , "group_night=DISABLE"                       )
+  ->box                  ("enabled" , "nightIR"               , "group_night=ENABLE"                        )
+  ->box                  ("enabled" , "nightIR"               ,   "group_day=DISABLE"                       )
+
+
+
 
   # central off-switch...
-  ->box                  ("enabled" , "R=0"                                   , "all_off"                    )
-  ->box                  ("enabled" , "G=0"                                   , "all_off"                    )
-  ->box                  ("enabled" , "B=0"                                   , "all_off"                    )
+  #                                   trigger message           action                        optional group
+  ->box                  ("enabled" , "all_off"               , "L1=0"                                      )
+  ->box                  ("enabled" , "all_off"               , "L2=0"                                      )
+  ->box                  ("enabled" , "all_off"               , "L3=0"                                      )
+
+  ->box                  ("enabled" , "all_offIR"             , "L1=0"                                      )
+  ->box                  ("enabled" , "all_offIR"             , "L2=0"                                      )
+  ->box                  ("enabled" , "all_offIR"             , "L3=0"                                      )
 ;
 
 printf "flash configuration into modules? (yN) : ";
@@ -123,7 +214,7 @@ my $answer = <STDIN>;
 if ($answer =~ m/^[jJyY]$/) {
   connect();
   flash_fast("bbb");
-  #flash_fast("relay");
+  flash_fast("relay");
   flash_fast("dimmer");
   disconnect();
 }

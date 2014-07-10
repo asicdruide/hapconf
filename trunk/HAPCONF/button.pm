@@ -74,36 +74,36 @@ sub new {
                                       ,"port"               => {}
 
                                       # symbolic events...
-                                      ,"button_event"       => {#           code   LED     bit<0>- on
-                                                                #                             <1>- 400ms
-                                                                #                             <2>- 4s
-                                                                #                             <3>- off
-                                                                #                             <4>- <400ms
-                                                                #                             <5>- <4s
-                                                                #                             <6>- >4s
-                                                                "c"     => [0xFF , undef     , 0x01]  # "closed"
-                                                               ,"c="    => [0xFE , undef     , 0x02]  # "closed and held for 400ms"
-                                                               ,"c=="   => [0xFD , undef     , 0x04]  # "closed and held for 4s"
-                                                               ,"co"    => [0xFC , undef     , 0x10]  # "closed and open within 400ms"
-                                                               ,"c=o"   => [0xFB , undef     , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"c==o"  => [0xFA , undef     , 0x40]  # "closed and open after 4s"
-                                                               ,"o"     => [0x00 , undef     , 0x08]  # "open"
+                                      ,"button_event"       => {#           code   LED      bit<0>- on
+                                                                #                              <1>- 400ms
+                                                                #                              <2>- 4s
+                                                                #                              <3>- off
+                                                                #                              <4>- <400ms
+                                                                #                              <5>- <4s
+                                                                #                              <6>- >4s
+                                                                ":c"     => [0xFF , undef     , 0x01]  # "closed"
+                                                               ,":ch"    => [0xFE , undef     , 0x02]  # "closed and held for 400ms"
+                                                               ,":chh"   => [0xFD , undef     , 0x04]  # "closed and held for 4s"
+                                                               ,":co"    => [0xFC , undef     , 0x10]  # "closed and open within 400ms"
+                                                               ,":cho"   => [0xFB , undef     , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,":chho"  => [0xFA , undef     , 0x40]  # "closed and open after 4s"
+                                                               ,":o"     => [0x00 , undef     , 0x08]  # "open"
 
-                                                               ,"0c"    => [0xFF , 0x00      , 0x01]  # "closed"
-                                                               ,"0c="   => [0xFE , 0x00      , 0x02]  # "closed and held for 400ms"
-                                                               ,"0c=="  => [0xFD , 0x00      , 0x04]  # "closed and held for 4s"
-                                                               ,"0co"   => [0xFC , 0x00      , 0x10]  # "closed and open within 400ms"
-                                                               ,"0c=o"  => [0xFB , 0x00      , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"0c==o" => [0xFA , 0x00      , 0x40]  # "closed and open after 4s"
-                                                               ,"0o"    => [0x00 , 0x00      , 0x08]  # "open"
+                                                               ,":0c"    => [0xFF , 0x00      , 0x01]  # "closed"
+                                                               ,":0ch"   => [0xFE , 0x00      , 0x02]  # "closed and held for 400ms"
+                                                               ,":0chh"  => [0xFD , 0x00      , 0x04]  # "closed and held for 4s"
+                                                               ,":0co"   => [0xFC , 0x00      , 0x10]  # "closed and open within 400ms"
+                                                               ,":0cho"  => [0xFB , 0x00      , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,":0chho" => [0xFA , 0x00      , 0x40]  # "closed and open after 4s"
+                                                               ,":0o"    => [0x00 , 0x00      , 0x08]  # "open"
 
-                                                               ,"1c"    => [0xFF , 0xFF      , 0x01]  # "closed"
-                                                               ,"1c="   => [0xFE , 0xFF      , 0x02]  # "closed and held for 400ms"
-                                                               ,"1c=="  => [0xFD , 0xFF      , 0x04]  # "closed and held for 4s"
-                                                               ,"1co"   => [0xFC , 0xFF      , 0x10]  # "closed and open within 400ms"
-                                                               ,"1c=o"  => [0xFB , 0xFF      , 0x20]  # "closed and open between 400ms and 4s"
-                                                               ,"1c==o" => [0xFA , 0xFF      , 0x40]  # "closed and open after 4s"
-                                                               ,"1o"    => [0x00 , 0xFF      , 0x08]  # "open"
+                                                               ,":1c"    => [0xFF , 0xFF      , 0x01]  # "closed"
+                                                               ,":1ch"   => [0xFE , 0xFF      , 0x02]  # "closed and held for 400ms"
+                                                               ,":1chh"  => [0xFD , 0xFF      , 0x04]  # "closed and held for 4s"
+                                                               ,":1co"   => [0xFC , 0xFF      , 0x10]  # "closed and open within 400ms"
+                                                               ,":1cho"  => [0xFB , 0xFF      , 0x20]  # "closed and open between 400ms and 4s"
+                                                               ,":1chho" => [0xFA , 0xFF      , 0x40]  # "closed and open after 4s"
+                                                               ,":1o"    => [0x00 , 0xFF      , 0x08]  # "open"
                                                                }
 
                                       ,"thermostat_event"   => {# events without LED dependency
@@ -112,19 +112,19 @@ sub new {
                                                                }
 
                                       # symbolic indirect control commands...
-                                      ,"led_command"        => {"led_on"              => 0x01
-                                                               ,"led_off"             => 0x00
-                                                               ,"led_toggle"          => 0x02
+                                      ,"led_command"        => {"=on"                 => 0x01
+                                                               ,"=off"                => 0x00
+                                                               ,"=toggle"             => 0x02
                                                                }
 
-                                      ,"thermostat_command" => {"set_thermostat_to"   => 0x03
-                                                               ,"dec_thermostat_by"   => 0x04
-                                                               ,"inc_thermostat_by"   => 0x05
+                                      ,"thermostat_command" => {"thermostat="         => 0x03
+                                                               ,"thermostat-="        => 0x04
+                                                               ,"thermostat+="        => 0x05
                                                                }
 
-                                      ,"box_command"        => {"ENABLE_BOX"          => 0xDD
-                                                               ,"DISABLE_BOX"         => 0xDE
-                                                               ,"TOGGLE_BOX"          => 0xDF
+                                      ,"box_command"        => {"=ENABLE"             => 0xDD
+                                                               ,"=DISABLE"            => 0xDE
+                                                               ,"=TOGGLE"             => 0xDF
                                                                }
 
                                       ,"box_state"          => {"enabled"             => 0x01
@@ -212,7 +212,9 @@ sub get_id {
 
 # assign symbolic name on port...
 sub port_name {
-  my ($self , $port , $port_name) = @_;
+  my ($self , $spec) = @_;
+
+  my ($port , $port_name) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : illegal port '%s'.\n", $port;
@@ -245,11 +247,23 @@ sub notes {
 #=======================================================================================================================
 
 sub message {
-  my ($self , $name , $event_spec , $opt) = @_;
+  my ($self , $message_name , $event_spec) = @_;
 
-  if (exists($self->{"legal"}->{"button_event"}->{$event_spec})) {
-    if (exists(  $self->{"legal"}->{"port"}->{$opt})) {
-      my $port = $self->{"legal"}->{"port"}->{$opt};
+  my $port_name;
+  my $event_name;
+
+  if ($event_spec =~ m/^(.+?)\s*(:.+)$/ ) {
+    $port_name  = $1;
+    $event_name = $2;
+  }
+  else {
+    $event_name = $event_spec;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (exists($self->{"legal"}->{"button_event"}->{$event_name})) {
+    if (exists(  $self->{"legal"}->{"port"}->{$port_name})) {
+      my $port = $self->{"legal"}->{"port"}->{$port_name};
 
       # format button frame and register centrally that other can refer to it...
       my @message = (0x30,0x10     # universal module frame, button, 0,0,0,RE
@@ -258,23 +272,24 @@ sub message {
                     ,0xFF
                     ,0xFF
                     ,$port
-                    ,$self->{"legal"}->{"button_event"}->{$event_spec}->[0]
-                    ,$self->{"legal"}->{"button_event"}->{$event_spec}->[1]   # might be undef...
+                    ,$self->{"legal"}->{"button_event"}->{$event_name}->[0]
+                    ,$self->{"legal"}->{"button_event"}->{$event_name}->[1]   # might be undef...
                     ,0xFF
                     ,0xFF
                     ,0xFF
                     );
 
-      $self->{"value"}->{"event_enable"}->{$port}->{$event_spec} = 1;
+      $self->{"value"}->{"event_enable"}->{$port}->{$event_name} = 1;
 
-      $self->{"project"}->add_message($name , @message);
+      $self->{"project"}->add_message($message_name , @message);
     }
     else {
-      printf STDERR "ERROR : unknown port '%s'.\n", $opt;
+      printf STDERR "ERROR : unknown port '%s'.\n", $port_name;
       Carp::confess();
     }
   }
-  elsif (exists($self->{"legal"}->{"thermostat_event"}->{$event_spec})) {
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  elsif (exists($self->{"legal"}->{"thermostat_event"}->{$event_name})) {
     # format thermostat frame and register centrally that other can refer to it...
     my @message = (0x30,0x40
                   ,$self->{"value"}->{"node_number"}
@@ -282,16 +297,17 @@ sub message {
                   ,0xFF
                   ,0xFF
                   ,0x12
-                  ,$self->{"legal"}->{"thermostat_event"}->{$event_spec}
+                  ,$self->{"legal"}->{"thermostat_event"}->{$event_name}
                   ,0xFF
                   ,0xFF
                   ,0xFF
                   ,0xFF
                   );
-    $self->{"project"}->add_message($name , @message);
+    $self->{"project"}->add_message($message_name , @message);
   }
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   else {
-    printf STDERR "ERROR : illegal event specification '%s'.\n", $event_spec;
+    printf STDERR "ERROR : illegal event specification '%s'.\n", $event_name;
     Carp::confess();
   }
 
@@ -303,9 +319,8 @@ sub message {
 sub box {
   my ($self
      ,$state        # enabled/disabled
-     ,$command      # one of many
-     ,$opt          # depends on command: port_list, thermostat parameters,...
      ,$trigger      # trigger message
+     ,$action_spec  #
      ,$group_list   # optional box_group membership...
      ) = @_;
 
@@ -322,6 +337,7 @@ sub box {
   my $INSTR6 = 0x00;
   my $INSTR7 = 0x00;
   my $INSTR8 = 0x00;
+
   # fetch trigger message...
   my @trigger = $self->{"project"}->get_message($trigger);
 
@@ -334,6 +350,29 @@ sub box {
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  my $name_list;
+  my $box_group;
+  my $value;
+  my $command = $action_spec;
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  # port[,port]=(on|off|toggle)
+  # thermostat(=|+=|-=)\d
+  # group=(ENABLE|DISABLE|TOGGLE)
+
+  if ($command =~ m/^(.+\=)(\d+)$/) {
+    # right side is a number...
+    $command = $1;
+    $value   = $2;
+  }
+  elsif ($command =~ m/^(.+?)(\=.+)$/) {
+    $name_list = $1;
+    $command   = $2;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (exists( $self->{"legal"}->{"led_command"}->{$command})) {
     $INSTR1 = $self->{"legal"}->{"led_command"}->{$command};
     $INSTR2 = 0;
@@ -342,9 +381,9 @@ sub box {
     my @port_list;
 
     # translate port list into bit masks...
-    foreach my $port (split(/\s*,\s*/ , $opt)) {
-      if (exists($self->{"legal"}->{"port"}->{$port})) {
-        my $i =  $self->{"legal"}->{"port"}->{$port};
+    foreach my $port_name (split(/\s*,\s*/ , $name_list)) {
+      if (exists($self->{"legal"}->{"port"}->{$port_name})) {
+        my $i =  $self->{"legal"}->{"port"}->{$port_name};
 
         if ($i <= 8) {
           $INSTR2 |= 2**($i-1);
@@ -353,10 +392,10 @@ sub box {
           $INSTR3 |= 2**($i-9);
         }
 
-        push(@port_list , $self->{"legal"}->{"port"}->{$port});
+        push(@port_list , $self->{"legal"}->{"port"}->{$port_name});
       }
       else {
-        printf STDERR "ERROR : unknown port '%s'.\n", $port;
+        printf STDERR "ERROR : unknown port '%s'.\n", $port_name;
         Carp::confess();
       }
     }
@@ -374,31 +413,52 @@ sub box {
 
     if ($INSTR1 == 0x03) {
       # set thermostat
-      $INSTR2 = 0; # translate opt-value into MSB
-      $INSTR3 = 0; # translate opt-value into LSB
+
+      if ($value < -55.0
+          ||
+          $value > 125.0){
+        printf STDERR "ERROR : illegal thermostat temperature '%s'.\n", $value;
+        Carp::confess();
+      }
+
+      my $temp_int = int($value / 0.0625);
+      my $temp_msb = ($temp_int % 0xFF00)>>8;
+      my $temp_lsb = ($temp_int % 0x00FF)>>0;
+
+      $INSTR2 = $temp_msb;
+      $INSTR3 = $temp_lsb;
     }
     else {
       # inc/dec thermostat
-      $INSTR2 = 0; # translate opt-value into step
+      if ($value < 0.0625
+          ||
+          $value > 16.0){
+        printf STDERR "ERROR : illegal thermostat delta '%s'.\n", $value;
+        Carp::confess();
+      }
+
+      my $temp_int = int($value / 0.0625) & 0xFF;
+
+      $INSTR2 = $temp_int;
     }
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   elsif (exists($self->{"legal"}->{"box_command"}->{$command})) {
     $INSTR1 =   $self->{"legal"}->{"box_command"}->{$command};
 
-    if (!exists($self->{"value"}->{"box_group"}->{$opt})) {
-      printf STDERR "ERROR : unknown box_group '%s'.\n", $opt;
+    if (!exists($self->{"value"}->{"box_group"}->{$name_list})) {
+      printf STDERR "ERROR : unknown box_group '%s'.\n", $name_list;
       Carp::confess();
     }
 
     # check that group is continuous...
-    my @box_group = @{$self->{"value"}->{"box_group"}->{$opt}};
+    my @box_group = @{$self->{"value"}->{"box_group"}->{$name_list}};
     {
       my $x = $box_group[0];
 
       foreach my $i (0..scalar(@box_group)-1) {
         if ($x+$i != $box_group[$i]) {
-          printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $opt, join("," , @box_group);
+          printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $name_list, join("," , @box_group);
           Carp::confess();
         }
       }
@@ -424,7 +484,7 @@ sub box {
   my $doc = sprintf("%s %-15s %-20s %s %s"
                    ,$state
                    ,$command
-                   ,$opt
+                   ,$action_spec
                    ,join(" " , map {if (defined($_)) {
                                       sprintf("=%02X",$_);
                                     }

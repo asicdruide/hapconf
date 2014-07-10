@@ -70,19 +70,19 @@ sub new {
                                       ,"port"               => {}
 
                                       # symbolic relay events...
-                                      ,"relay_event"        => {"->on"        => 0xFF
-                                                               ,"->off"       => 0x00
+                                      ,"relay_event"        => {":is_on"      => 0xFF
+                                                               ,":is_off"     => 0x00
                                                                }
 
                                       # symbolic indirect control commands...
-                                      ,"relay_command"      => {"turn_on"     => 0x01
-                                                               ,"turn_off"    => 0x00
-                                                               ,"toggle"      => 0x02
+                                      ,"relay_command"      => {"=on"         => 0x01
+                                                               ,"=off"        => 0x00
+                                                               ,"=toggle"     => 0x02
                                                                }
 
-                                      ,"box_command"        => {"ENABLE_BOX"  => 0xDD
-                                                               ,"DISABLE_BOX" => 0xDE
-                                                               ,"TOGGLE_BOX"  => 0xDF
+                                      ,"box_command"        => {"=ENABLE"     => 0xDD
+                                                               ,"=DISABLE"    => 0xDE
+                                                               ,"=TOGGLE"     => 0xDF
                                                                }
 
                                       ,"box_state"          => {"enabled"     => 0x01
@@ -166,7 +166,9 @@ sub get_id {
 
 # assign symbolic name on port...
 sub port_name {
-  my ($self , $port , $port_name) = @_;
+  my ($self , $spec) = @_;
+
+  my ($port , $port_name) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
   if (!exists($self->{"legal"}->{"port"}->{$port})) {
     printf STDERR "ERROR : illegal port '%s'.\n", $port;
@@ -199,11 +201,24 @@ sub notes {
 #=======================================================================================================================
 
 sub message {
-  my ($self , $name , $event_spec , $opt) = @_;
+  my ($self , $message_name , $event_spec) = @_;
 
-  if (exists(    $self->{"legal"}->{"relay_event"}->{$event_spec})) {
-    if (exists(  $self->{"legal"}->{"port"       }->{$opt       })) {
-      my $port = $self->{"legal"}->{"port"       }->{$opt       };
+
+  my $port_name;
+  my $event_name;
+
+  if ($event_spec =~ m/^(.+?)(:.+)$/) {
+    $port_name  = $1;
+    $event_name = $2;
+  }
+  else {
+    $event_name = $event_spec;
+  }
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  if (exists(    $self->{"legal"}->{"relay_event"}->{$event_name})) {
+    if (exists(  $self->{"legal"}->{"port"       }->{$port_name })) {
+      my $port = $self->{"legal"}->{"port"       }->{$port_name };
 
       # format relay frame and register centrally that other can refer to it...
       my @message = (0x30,0x20
@@ -212,17 +227,17 @@ sub message {
                     ,0xFF
                     ,0xFF
                     ,$port
-                    ,$self->{"legal"}->{"relay_event"}->{$event_spec}
+                    ,$self->{"legal"}->{"relay_event"}->{$event_name}
                     ,0xFF
                     ,undef
                     ,undef
                     ,undef
                     );
 
-      $self->{"project"}->add_message($name , @message);
+      $self->{"project"}->add_message($message_name , @message);
     }
     else {
-      printf STDERR "ERROR : unknown port '%s'.\n", $opt;
+      printf STDERR "ERROR : unknown port '%s'.\n", $port_name;
       Carp::confess();
     }
   }
@@ -239,19 +254,25 @@ sub message {
 # implements direct control...
 sub send {
   my ($self
-     ,$command
-     ,$port_list
+     ,$action_spec
      ) = @_;
+  my $command         = $action_spec;
   my $timer           = 0;
   my $instruction;
   my $port_mask       = 0;
   my $receiver_number = $self->{"value"}->{"node_number"};
   my $receiver_group  = $self->{"value"}->{"node_group"};
   my $project         = $self->{"project"};
+  my $name_list;
 
   if ($command =~ m/^(.+)#([0-9]+)$/) {
     $command = $1;
     $timer   = $2;
+  }
+
+  if ($command =~ m/^(.+?)(\=.+)$/) {
+    $name_list = $1;
+    $command   = $2;
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -259,7 +280,7 @@ sub send {
     $instruction = $self->{"legal"}->{"relay_command"}->{$command};
 
     # translate port list into bit masks...
-    foreach my $port (split(/\s*,\s*/ , $port_list)) {
+    foreach my $port (split(/\s*,\s*/ , $name_list)) {
       if (exists($self->{"legal"}->{"port"}->{$port})) {
         my $i =  $self->{"legal"}->{"port"}->{$port};
 
@@ -298,10 +319,9 @@ sub send {
 
 sub box {
   my ($self
-     ,$state        # enabled/isabled
-     ,$command      # one of many
-     ,$opt          # depends on command: port_list, thermostat parameters,...
+     ,$state        # enabled/disabled
      ,$trigger      # trigger message
+     ,$action_spec  #
      ,$group_list   # optional box_group membership...
      ) = @_;
 
@@ -309,6 +329,7 @@ sub box {
     $group_list = "";
   }
 
+  my $command = $action_spec;
   my $box_state;
   my $INSTR1 = 0x00;
   my $INSTR2 = 0x00;
@@ -318,6 +339,7 @@ sub box {
   my $INSTR6 = 0x00;
   my $INSTR7 = 0x00;
   my $INSTR8 = 0x00;
+
   # fetch trigger message...
   my @trigger = $self->{"project"}->get_message($trigger);
 
@@ -338,6 +360,13 @@ sub box {
     $timer   = $2;
   }
 
+  my $name_list;
+
+  if ($command =~ m/^(.+?)\s*(\=.+)$/) {
+    $name_list = $1;
+    $command   = $2;
+  }
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   if (exists( $self->{"legal"}->{"relay_command"}->{$command})) {
     $INSTR1 = $self->{"legal"}->{"relay_command"}->{$command};
@@ -346,7 +375,7 @@ sub box {
     my @port_list;
 
     # translate port list into bit masks...
-    foreach my $port (split(/\s*,\s*/ , $opt)) {
+    foreach my $port (split(/\s*,\s*/ , $name_list)) {
       if (exists($self->{"legal"}->{"port"}->{$port})) {
         my $i =  $self->{"legal"}->{"port"}->{$port};
 
@@ -373,19 +402,19 @@ sub box {
   elsif (exists($self->{"legal"}->{"box_command"}->{$command})) {
     $INSTR1 =   $self->{"legal"}->{"box_command"}->{$command};
 
-    if (!exists($self->{"value"}->{"box_group"}->{$opt})) {
-      printf STDERR "ERROR : unknown box_group '%s'.\n", $opt;
+    if (!exists($self->{"value"}->{"box_group"}->{$name_list})) {
+      printf STDERR "ERROR : unknown box_group '%s'.\n", $name_list;
       Carp::confess();
     }
 
     # check that group is continuous...
-    my @box_group = @{$self->{"value"}->{"box_group"}->{$opt}};
+    my @box_group = @{$self->{"value"}->{"box_group"}->{$name_list}};
     {
       my $x = $box_group[0];
 
       foreach my $i (0..scalar(@box_group)-1) {
         if ($x+$i != $box_group[$i]) {
-          printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $opt, join("," , @box_group);
+          printf STDERR "ERROR : box_group '%s' is not continuous (%s).\n", $name_list, join("," , @box_group);
           Carp::confess();
         }
       }
@@ -411,7 +440,7 @@ sub box {
   my $doc = sprintf("%s %-15s %-20s %s %s"
                    ,$state
                    ,$command
-                   ,$opt
+                   ,$action_spec
                    ,join(" " , map {if (defined($_)) {
                                       sprintf("=%02X",$_);
                                     }
@@ -445,20 +474,21 @@ sub box {
 #=======================================================================================================================
 
 sub powerup_state {
-  my ($self , $port , $state_spec) = @_;
+  my ($self , $spec) = @_;
+  my ($name , $value) = ($spec =~ m/^(.+?)\s*\=\s*(.+?)$/);
 
-  if (!exists($self->{"legal"}->{"port"}->{$port})) {
-    printf STDERR "ERROR : unknown port '%s'.\n", $port;
+  if (!exists($self->{"legal"}->{"port"}->{$name})) {
+    printf STDERR "ERROR : unknown port '%s'.\n", $name;
     Carp::confess();
   }
-  elsif (!exists($self->{"legal"}->{"powerup_state"}->{$state_spec})) {
-    printf STDERR "ERROR : illegal powerup state specification '%s'.\n", $state_spec;
+  elsif (!exists($self->{"legal"}->{"powerup_state"}->{$value})) {
+    printf STDERR "ERROR : illegal powerup state specification '%s'.\n", $value;
     Carp::confess();
   }
   else {
-    $port = $self->{"legal"}->{"port"}->{$port};
+    my $port = $self->{"legal"}->{"port"}->{$name};
 
-    $self->{"value"}->{"powerup_state"}->{$port} = $state_spec;
+    $self->{"value"}->{"powerup_state"}->{$port} = $value;
   }
 
   return $self;
@@ -689,13 +719,13 @@ sub message_decoder {
 sub decode_relay_message {
   my ($self , @message) = @_;
 
-  my %map = (0x00 => "->OFF"
-            ,0xFF => "->ON"
+  my %map = (0x00 => "is_OFF"
+            ,0xFF => "is_ON"
             );
 
   my $channel    = $message[7];
   my $status     = $message[8];
-  my $event      = exists($map{$status}) ? $map{$status} : "->??";
+  my $event      = exists($map{$status}) ? $map{$status} : "is_??";
 
   my $result     = sprintf ("Relay K%d %s" , $channel , $event);
 
