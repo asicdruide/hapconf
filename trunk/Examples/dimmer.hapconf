@@ -4,6 +4,34 @@
 # test different dimmer UIs
 #
 ########################################################################################################################
+#
+# the eval board has the following input switches
+#
+# led1    (2:on)       (4:on)       (6:on)
+# led2    1:2:off      3:4:off      5:6:off
+# led3    (1:on)       (3:on)       (5:on)
+# led4
+# led5
+# led6    (7:on)       (8:on)       (9:on)
+# led7     7:off        8:off        9:off
+# led8
+# led9
+# led10   10:on         11:on        12:on
+# led11   10:off        11:off       12:off
+# led12
+# led13
+#                       (13:on)
+#                        13:off
+#
+# modules:
+#  * button, back box13
+#  * relay, bistable, NO
+#  * RGB LED
+#  * IR RxTx
+#  * Ethernet
+#
+# 9 LED connected to 6 relay channels and 3 dimmer channels.
+#
 use HAPCONF;
 
 # create setup...

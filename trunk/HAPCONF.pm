@@ -706,14 +706,14 @@ sub new_scan_network {
   while (scalar(@ping) > 0) {
     my $pinged = 0;
 
-    while (scalar(@ping) > 0 && $pinged < 1) {
+    while (scalar(@ping) > 0 && $pinged < 5) {
       my ($number , $group) = @{shift(@ping)};
 
       HAPCONF::util::Tx($project
         ,"ping"
-        ,0x10    , 0x40    # hw type request
+        ,0x11    , 0x30    # hw type request
         ,0x00    , 0x00    # sender (might not know, yet)
-        ,0x00    , 0x00    # don't care
+        ,0x01    , 0x00    #
         ,$number , $group  # receiver
         ,0x00    , 0x00    # don't care
         ,0x00    , 0x00    # don't care
@@ -733,9 +733,9 @@ sub new_scan_network {
         my @rx_byte = map {ord(substr($rx , $_ , 1))} (0..14);
 
         # tbd: check CHKSUM...
-        if ($rx_byte[1] == 0x10
+        if ($rx_byte[1] == 0x11
             &&
-            $rx_byte[2] == 0x41) {
+            $rx_byte[2] == 0x31) {
           # somebody sent a hw type response...
           my $number = $rx_byte[3];
           my $group  = $rx_byte[4];

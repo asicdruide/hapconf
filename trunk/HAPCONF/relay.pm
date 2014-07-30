@@ -317,6 +317,20 @@ sub send {
 
 #=======================================================================================================================
 
+sub group {
+  my ($self
+     ,$name
+     ,$first
+     ,$length
+     ) = @_;
+
+  $self->{"value"}->{"tmp_group"}->{$name} = [$first-1 .. $first+$length-2];
+
+  return $self;
+}
+
+#=======================================================================================================================
+
 sub box {
   my ($self
      ,$state        # enabled/disabled
@@ -402,13 +416,30 @@ sub box {
   elsif (exists($self->{"legal"}->{"box_command"}->{$command})) {
     $INSTR1 =   $self->{"legal"}->{"box_command"}->{$command};
 
-    if (!exists($self->{"value"}->{"box_group"}->{$name_list})) {
+    # store group membership...
+    foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
+      my $this_box = scalar(@{$self->{"value"}->{"box"}});
+
+      push(@{$self->{"value"}->{"box_group"}->{$box_group}} , $this_box);
+    }
+
+    my @box_group;
+
+    if (exists(      $self->{"value"}->{"box_group"}->{$name_list})) {
+      @box_group = @{$self->{"value"}->{"box_group"}->{$name_list}};
+    }
+    elsif (          $self->{"value"}->{"tmp_group"}->{$name_list}) {
+      @box_group = @{$self->{"value"}->{"tmp_group"}->{$name_list}};
+
+      # just one it once...
+      delete($self->{"value"}->{"tmp_group"}->{$name_list});
+    }
+    else {
       printf STDERR "ERROR : unknown box_group '%s'.\n", $name_list;
       Carp::confess();
     }
 
     # check that group is continuous...
-    my @box_group = @{$self->{"value"}->{"box_group"}->{$name_list}};
     {
       my $x = $box_group[0];
 
@@ -422,13 +453,6 @@ sub box {
 
     $INSTR2 = $box_group[ 0]         & 0x7F;   # BoxX...
     $INSTR3 = (scalar(@box_group)-1) & 0x7F;   # BoxY...
-
-    # store group membership...
-    foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
-      my $this_box = scalar(@{$self->{"value"}->{"box"}});
-
-      push(@{$self->{"value"}->{"box_group"}} , $this_box);
-    }
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   else {
@@ -542,7 +566,7 @@ sub flash {
     }
   }
 
-  if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a button module of correct version.\n"}
+  if ($msg eq "pass") {printf STDERR "INFO : verified that this module is a relay module of correct version.\n"}
   else {printf STDERR $msg;$msg = ""}
 
   if ($msg eq "pass") {$msg = HAPCONF::util::one_node_enter_programming_mode($project , $number , $group)}
@@ -681,7 +705,7 @@ sub flash {
 
 
   if ($msg eq "pass") {
-    printf "INFO : node %s,%s (button) flashed\n",$number , $group;
+    printf "INFO : node %s,%s (relay) flashed\n",$number , $group;
   }
 
   HAPCONF::util::one_node_exit_programming_mode($project , $number , $group);

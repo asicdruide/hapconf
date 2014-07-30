@@ -71,6 +71,31 @@ sub check_number {
 
 #=======================================================================================================================
 
+sub check_byte {
+  my ($number , $msg) = @_;
+
+  if (!defined($number)) {
+    printf STDERR "ERROR : undefined %s not allowed.\n", $msg;
+    Carp::confess();
+  }
+
+  $number =~ s/\s//g;
+
+  if ($number !~ m/\d+/) {
+    printf STDERR "ERROR : illegal value '%s' for %s.\n", $number , $msg;
+    Carp::confess();
+  }
+
+  if ($number > 255) {
+    printf STDERR "ERROR : illegal value '%s' for %s.\n", $number , $msg;
+    Carp::confess();
+  }
+
+  return $number;
+}
+
+#=======================================================================================================================
+
 sub check_description {
   my ($string) = @_;
 
@@ -1148,21 +1173,24 @@ sub Flash_write {
     return sprintf("ERROR : illegal Flash address 0x%06X\n",$base_address);
   }
 
-  my $data_ok = 1;
+  my @data_error;
 
-  foreach my $data (@data) {
-    if (!defined($data)
-        ||
-        $data > 255
-        ||
-        $data < 0
-       ) {
-      $data_ok = 0;
+  foreach my $i (0..scalar(@data)-1) {
+    my $data = $data[$i];
+
+    if (!defined($data)) {
+      push(@data_error , sprintf("%3d : undefined",$i));
+    }
+    elsif ($data > 255) {
+      push(@data_error , sprintf("%3d : %d is too big", $i , $data));
+    }
+    elsif ($data < 0) {
+      push(@data_error , sprintf("%3d : %d is too small", $i , $data));
     }
   }
 
-  if ($data_ok == 0) {
-    return "ERROR : illegal Flash data\n";
+  if (scalar(@data_error) > 0) {
+    return sprintf("ERROR : illegal Flash data\n  %s\n" , join("\n  " , @data_error));
   }
 
   foreach my $block (0..(scalar(@data)/64)-1) {

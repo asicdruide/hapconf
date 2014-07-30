@@ -471,7 +471,7 @@ sub box {
     foreach my $box_group (split(/\s*,\s*/ , $group_list)) {
       my $this_box = scalar(@{$self->{"value"}->{"box"}});
 
-      push(@{$self->{"value"}->{"box_group"}} , $this_box);
+      push(@{$self->{"value"}->{"box_group"}->{$box_group}} , $this_box);
     }
   }
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

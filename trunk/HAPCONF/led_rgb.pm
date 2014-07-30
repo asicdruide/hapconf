@@ -105,8 +105,8 @@ sub new {
                                                                }
 
                                       # symbolic relay events...
-                                      ,"relay_event"        => {"->on"         => 0xFF
-                                                               ,"->off"        => 0x00
+                                      ,"relay_event"        => {":is_on"         => 0xFF
+                                                               ,":is_off"        => 0x00
                                                                }
 
                                       # symbolic indirect control commands...
@@ -368,10 +368,21 @@ sub state_memory {
 #=======================================================================================================================
 
 sub message {
-  my ($self , $name , $event_spec , $opt) = @_;
+  my ($self , $message_name , $event_spec) = @_;
 
-  if (exists(    $self->{"legal"}->{"relay_event"}->{$event_spec})) {
-    if (exists(  $self->{"legal"}->{"port"       }->{$opt       })) {
+  my $port_name;
+  my $event_name;
+
+  if ($event_spec =~ m/^(.+?)\s*(:.+)$/ ) {
+    $port_name  = $1;
+    $event_name = $2;
+  }
+  else {
+    $event_name = $event_spec;
+  }
+
+  if (exists(    $self->{"legal"}->{"relay_event"}->{$event_name})) {
+    if (exists(  $self->{"legal"}->{"port"       }->{$port_name})) {
 
       # format dimmer message and register centrally that other can refer to it...
       my @message = (0x30,0x80
@@ -381,16 +392,16 @@ sub message {
                     ,0xFF
                     ,0x04                  # master
                     ,undef
-                    ,$self->{"legal"}->{"relay_event"}->{$event_spec}
+                    ,$self->{"legal"}->{"relay_event"}->{$event_name}
                     ,undef
                     ,undef
                     ,undef
                     );
 
-      $self->{"project"}->add_message($name , @message);
+      $self->{"project"}->add_message($message_name , @message);
     }
     else {
-      printf STDERR "ERROR : unknown port '%s'.\n", $opt;
+      printf STDERR "ERROR : unknown port '%s'.\n", $port_name;
       Carp::confess();
     }
   }
@@ -411,6 +422,20 @@ sub send {
      ,$port_list
      ) = @_;
   # tbd...
+
+  return $self;
+}
+
+#=======================================================================================================================
+
+sub group {
+  my ($self
+     ,$name
+     ,$first
+     ,$length
+     ) = @_;
+
+  $self->{"value"}->{"tmp_group"}->{$name} = [$first-1 .. $first+$length-2];
 
   return $self;
 }
@@ -463,11 +488,13 @@ sub box {
   if ($command =~ m/^(.+)#([0-9]+)$/) {
     $command = $1;
     $timer   = $2;
+
+    HAPCONF::util::check_byte($timer , "timer value");
   }
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  if ($command =~ m/^([a-zA-Z0-9_]+)(.+)$/ ) {
+  if ($command =~ m/^([a-zA-Z0-9_]+)\s*(.+)$/ ) {
     $name    = $1;
     $command = $2;
   }
@@ -491,6 +518,9 @@ sub box {
 
     if ($port == 5) {
       # rgb command...
+      HAPCONF::util::check_byte($value[0] , "R_value");
+      HAPCONF::util::check_byte($value[1] , "G_value");
+      HAPCONF::util::check_byte($value[2] , "B_value");
       $INSTR2 = $value[0];
       $INSTR3 = $value[1];
       $INSTR4 = $value[2];
@@ -498,6 +528,7 @@ sub box {
     }
     else {
       # single channel command...
+      HAPCONF::util::check_byte($value[0] , "value");
       $INSTR2 = $value[0];
       $INSTR3 = $timer;
     }
@@ -547,13 +578,24 @@ sub box {
 
     $box_group=$name;
 
-    if (!exists($self->{"value"}->{"box_group"}->{$box_group})) {
+    my @box_group;
+
+    if (exists(      $self->{"value"}->{"box_group"}->{$box_group})) {
+      @box_group = @{$self->{"value"}->{"box_group"}->{$box_group}};
+    }
+    elsif (          $self->{"value"}->{"tmp_group"}->{$box_group}) {
+      @box_group = @{$self->{"value"}->{"tmp_group"}->{$box_group}};
+
+      # just one it once...
+      delete($self->{"value"}->{"tmp_group"}->{$box_group});
+    }
+    else {
       printf STDERR "ERROR : unknown box_group '%s'.\n", $box_group;
       Carp::confess();
     }
 
+
     # check that group is continuous...
-    my @box_group = @{$self->{"value"}->{"box_group"}->{$box_group}};
     {
       my $x = $box_group[0];
 

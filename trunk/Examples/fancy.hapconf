@@ -66,8 +66,25 @@ button_back_box13        ("bbb")
   ->port_name            ("12=B12")
   ->port_name            ("13=B13")
   ->message              ("count"                , "B2 :c")
+  ->message              ("f1"                   , "B2 :c")
+  ->message              ("f2"                   , "B4 :c")
+
+  ->message              ("f20"                  , "B7 :0c")
+  ->message              ("f21"                  , "B7 :1c")
+  ->message              ("f2x"                  , "B7 :c" )
+  ->message              ("day"                  , "B10:c")
+  ->message              ("night"                , "B10:o")
+
   ->message              ("all_off"              , "B13:c")
+
   ->notes                ("configured by hapconf")
+
+  #
+  # feedback for day/night...
+  #                                   trigger      action    optional grouplist
+  ->box                  ("enabled" , "day"      , "7=on" )
+  ->box                  ("enabled" , "night"    , "7=off")
+
   ->thermostat_threshold (22.0)
   ->thermostat_hysteresis( 1.0)
   ->temperature_offset   ( 0.0)
@@ -82,34 +99,183 @@ relay_bistable_NO        ("relay")
   ->port_name            ("4=K4" )
   ->port_name            ("5=K5" )
   ->port_name            ("6=K6" )
+  ->message              ("R1"  , "K1:is_on" )
+  ->message              ("R2"  , "K2:is_on" )
+  ->message              ("R3"  , "K3:is_on" )
+  ->message              ("R4"  , "K4:is_on" )
+  ->message              ("R5"  , "K5:is_on" )
+  ->message              ("R6"  , "K6:is_on" )
+  ->message              ("R7"  , "K1:is_off")
+  ->message              ("R8"  , "K2:is_off")
+  ->message              ("R9"  , "K3:is_off")
+  ->message              ("R10" , "K4:is_off")
+  ->message              ("R11" , "K5:is_off")
+  ->message              ("R12" , "K6:is_off")
+
+  ->message              ("K1_on" , "K1:is_on" )
+  ->message              ("K1_off", "K1:is_off")
+
+
                          # state      command             port list             trigger message
-  # 2 bit binary counter
+  ## 2 bit binary counter
+  #
+  ## resolve cyclic dependency by pre-defining one group...
+  #->group                ("state_zero" , 13 , 4)
+  #
+  ## state is three, next state will be zero
+  #->box                  ("disabled" , "count"   , "K1=off"               , "state_three")
+  #->box                  ("disabled" , "count"   , "K2=off"               , "state_three")
+  #->box                  ("disabled" , "count"   , "state_zero=ENABLE"    , "state_three")
+  #->box                  ("disabled" , "count"   , "state_three=DISABLE"  , "state_three")
+  #
+  ## state is two, next state will be three
+  #->box                  ("disabled" , "count"   , "K1=on"                , "state_two"  )
+  #->box                  ("disabled" , "count"   , "K2=on"                , "state_two"  )
+  #->box                  ("disabled" , "count"   , "state_three=ENABLE"   , "state_two"  )
+  #->box                  ("disabled" , "count"   , "state_two=DISABLE"    , "state_two"  )
+  #
+  ## state is one, next state will be two
+  #->box                  ("disabled" , "count"   , "K1=off"               , "state_one"  )
+  #->box                  ("disabled" , "count"   , "K2=on"                , "state_one"  )
+  #->box                  ("disabled" , "count"   , "state_two=ENABLE"     , "state_one"  )
+  #->box                  ("disabled" , "count"   , "state_one=DISABLE"    , "state_one"  )
+  #
+  ## state is zero, next state will be one
+  #->box                  ("enabled"  , "count"   , "K1=on"                , "state_zero" )
+  #->box                  ("enabled"  , "count"   , "K2=off"               , "state_zero" )
+  #->box                  ("enabled"  , "count"   , "state_one=ENABLE"     , "state_zero" )
+  #->box                  ("enabled"  , "count"   , "state_zero=DISABLE"   , "state_zero" )
+  #
+  ## all_off, defined start...
+  #->box                  ("enabled"  , "all_off" , "state_zero =ENABLE"                  )
+  #->box                  ("enabled"  , "all_off" , "state_one  =DISABLE"                 )
+  #->box                  ("enabled"  , "all_off" , "state_two  =DISABLE"                 )
+  #->box                  ("enabled"  , "all_off" , "state_three=DISABLE"                 )
 
-  # resolve cyclic dependency by pre-defining one group...
-  ->group                ("group_one" , 10 , 3)
 
-  # state is zero, next state will be one
-  ->box                  ("enabled"  , "count"   , "K1=on"              , "group_zero" )
-  ->box                  ("enabled"  , "count"   , "K2=off"             , "group_zero" )
-  ->box                  ("enabled"  , "count"   , "group_one=ENABLE"   , "group_zero" )
+  # one button many (delayed) actions...
+  ->box                  ("enabled" , "f1"    , "K1,K2,K3,K4,K5,K6=on"   )
+  ->box                  ("enabled" , "f1"    , "K6               =off#1")
+  ->box                  ("enabled" , "f1"    , "K5               =off#2")
+  ->box                  ("enabled" , "f1"    , "K4               =off#3")
+  ->box                  ("enabled" , "f1"    , "K3               =off#4")
+  ->box                  ("enabled" , "f1"    , "K2               =off#5")
+  ->box                  ("enabled" , "f1"    , "K1               =off#6")
 
-  # state is three, next state will be zero
-  ->box                  ("disabled" , "count"   , "K1=off"             , "group_three")
-  ->box                  ("disabled" , "count"   , "K2=off"             , "group_three")
-  ->box                  ("disabled" , "count"   , "group_zero=ENABLE"  , "group_three")
+  ## does not work (only one timer per channel)...
+  #->box                  ("enabled" , "f2"    , "K1               =on#0")
+  #->box                  ("enabled" , "f2"    , "K2               =on#1")
+  #->box                  ("enabled" , "f2"    , "K3               =on#2")
+  #->box                  ("enabled" , "f2"    , "K4               =on#3")
+  #->box                  ("enabled" , "f2"    , "K5               =on#4")
+  #->box                  ("enabled" , "f2"    , "K6               =on#5")
+  #->box                  ("enabled" , "f2"    , "K1,K2,K3,K4,K5,K6=off#7")
 
-  # state is two, next state will be three
-  ->box                  ("disabled" , "count"   , "K1=on"              , "group_two"  )
-  ->box                  ("disabled" , "count"   , "K2=on"              , "group_two"  )
-  ->box                  ("disabled" , "count"   , "group_three=ENABLE" , "group_two"  )
+  ## self triggered chain...
+  ## does not work at all, don't understand why...
+  ## maybe a node does not receive own transmits?...
+  #->box                  ("enabled" , "f2"    , "K1=on"                  )
+  #->box                  ("enabled" , "R1"    , "K2=on"                  )
+  #->box                  ("enabled" , "R2"    , "K3=on"                  )
+  #->box                  ("enabled" , "R3"    , "K4=on"                  )
+  #->box                  ("enabled" , "R4"    , "K5=on"                  )
+  #->box                  ("enabled" , "R5"    , "K6=on"                  )
+  #->box                  ("enabled" , "R6"    , "K1=off"                 )
+  #->box                  ("enabled" , "R7"    , "K2=off"                 )
+  #->box                  ("enabled" , "R8"    , "K3=off"                 )
+  #->box                  ("enabled" , "R9"    , "K4=off"                 )
+  #->box                  ("enabled" , "R10"   , "K5=off"                 )
+  #->box                  ("enabled" , "R11"   , "K6=off"                 )
 
-  # state is one, next state will be two
-  ->box                  ("disabled" , "count"   , "K1=off"             , "group_one"  )
-  ->box                  ("disabled" , "count"   , "K2=on"              , "group_one"  )
-  ->box                  ("disabled" , "count"   , "group_two=ENABLE"   , "group_one"  )
+  ## sequence...
+  ## does not work (only one timer per channel)...
+  #->box                  ("enabled" , "f2"    , "K1=on"                   )
+  #->box                  ("enabled" , "f2"    , "K2=off"                  )
+  #->box                  ("enabled" , "f2"    , "K1=off"                  )
+  #
+  #->box                  ("enabled" , "f2"    , "K1=toggle#1"             )
+  #->box                  ("enabled" , "f2"    , "K2=toggle#1"             )
+  #
+  #->box                  ("enabled" , "f2"    , "K1=toggle#2"             )
+  #
+  #->box                  ("enabled" , "f2"    , "K1=toggle#3"             )
+  #->box                  ("enabled" , "f2"    , "K2=toggle#3"             )
+  #->box                  ("enabled" , "f2"    , "K3=toggle#3"             )
+
+
+
+  # led-state dependent action...
+  ->box                  ("enabled" , "f20"    , "K1=toggle"               )
+  ->box                  ("enabled" , "f21"    , "K2=toggle"               )
+  ->box                  ("enabled" , "f2x"    , "K3=toggle"               )
+
+
+
+  ->box                  ("enabled"  , "all_off" , "K1,K2,K3,K4,K5,K6=off"  )
 ;
 
 
+
+
+
+led_rgb                  ("dimmer"   )
+  ->id                   (4    , 8   )
+  ->port_name            ("R=L1")
+  ->port_name            ("G=L2")
+  ->port_name            ("B=L3")
+
+  ->message              ("L1_on" , "L1:is_on")
+  ->message              ("L1_off", "L1:is_off")
+
+  ->dimming_time         ("L1=2")
+  ->dimming_time         ("L2=2")
+  ->dimming_time         ("L3=4")
+  ->dimming_time         ("M =1")
+
+  ->powerup_value        ("L1=  0")
+  ->powerup_value        ("L2=  0")
+  ->powerup_value        ("L3=  0")
+  ->powerup_value        ("M =255")          # on, dimm commands should have immediate effect...
+
+  ->state_memory         ("L1=yes")
+  ->state_memory         ("L2=yes")
+  ->state_memory         ("L3=no" )
+  ->state_memory         ("M =no" )
+
+  ->min_value            ("L1=  5")
+  ->min_value            ("L2=  5")
+  ->min_value            ("L3=  0")
+  ->min_value            ("M =255")
+
+  ->max_value            ("L1=255")
+  ->max_value            ("L2=255")
+  ->max_value            ("L3=255")
+  ->max_value            ("M =255")
+
+  ->notes                ("configured by hapconf")
+;
+
+
+
+
+node("bbb")
+  ->box                  ("enabled" , "R1"    , "1=on")
+  ->box                  ("enabled" , "R7"    , "1=off")
+;
+
+
+## lets try ping-pong between relay and led module...
+## this really works!...
+#node("relay")
+#  ->box                  ("enabled" , "f2"               , "K1=on" ) # should trigger an K1_on  message...
+#  ->box                  ("enabled" , "L1_on"            , "K1=off") # should trigger an K1_off message...
+#  ->box                  ("enabled" , "L1_off"           , "K1=on" ) # should trigger an K1_on  message...
+#;
+#
+#node("dimmer")
+#  ->box                  ("enabled" , "K1_on"            , "L1=255") # should trigger an L1_on  message...
+#  ->box                  ("enabled" , "K1_off"           , "L1=0"  ) # should trigger an L1_off message...
+#;
 
 
 printf "flash configuration into modules? (yN) : ";
@@ -117,8 +283,9 @@ my $answer = <STDIN>;
 
 if ($answer =~ m/^[jJyY]$/) {
   connect();
-  flash_fast("bbb"  );
-  flash_fast("relay");
+  flash_fast("bbb"   );
+  flash_fast("relay" );
+  flash_fast("dimmer");
   disconnect();
 }
 
