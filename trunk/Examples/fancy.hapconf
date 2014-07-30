@@ -1,0 +1,124 @@
+#!/usr/bin/env perl
+########################################################################################################################
+#
+# try fancy stuff...
+#
+########################################################################################################################
+#
+# the eval board has the following input switches
+#
+# led1    (2:on)       (4:on)       (6:on)
+# led2    1:2:off      3:4:off      5:6:off
+# led3    (1:on)       (3:on)       (5:on)
+# led4
+# led5
+# led6    (7:on)       (8:on)       (9:on)
+# led7     7:off        8:off        9:off
+# led8
+# led9
+# led10   10:on         11:on        12:on
+# led11   10:off        11:off       12:off
+# led12
+# led13
+#                       (13:on)
+#                        13:off
+#
+# modules:
+#  * button, back box13
+#  * relay, bistable, NO
+#  * RGB LED
+#  * IR RxTx
+#  * Ethernet
+#
+# 9 LED connected to 6 relay channels and 3 dimmer channels.
+#
+
+
+use HAPCONF;
+
+# create setup...
+HAPCONF->new("eval_board");
+
+
+
+
+##############################################################################
+# register and configure network nodes
+##############################################################################
+ethernet                 ("eth")
+  ->url                  ("192.168.0.100:1001")
+;
+
+button_back_box13        ("bbb")
+  ->id                   (6 , 8)
+                         # message name            event     port
+  ->port_name            ( "1=B1" )
+  ->port_name            ( "2=B2" )
+  ->port_name            ( "3=B3" )
+  ->port_name            ( "4=B4" )
+  ->port_name            ( "5=B5" )
+  ->port_name            ( "6=B6" )
+  ->port_name            ( "7=B7" )
+  ->port_name            ( "8=B8" )
+  ->port_name            ( "9=B9" )
+  ->port_name            ("10=B10")
+  ->port_name            ("11=B11")
+  ->port_name            ("12=B12")
+  ->port_name            ("13=B13")
+  ->message              ("count"                , "B2 :c")
+  ->message              ("all_off"              , "B13:c")
+  ->notes                ("configured by hapconf")
+  ->thermostat_threshold (22.0)
+  ->thermostat_hysteresis( 1.0)
+  ->temperature_offset   ( 0.0)
+;
+
+
+relay_bistable_NO        ("relay")
+  ->id                   (3 , 8)
+  ->port_name            ("1=K1" )
+  ->port_name            ("2=K2" )
+  ->port_name            ("3=K3" )
+  ->port_name            ("4=K4" )
+  ->port_name            ("5=K5" )
+  ->port_name            ("6=K6" )
+                         # state      command             port list             trigger message
+  # 2 bit binary counter
+
+  # resolve cyclic dependency by pre-defining one group...
+  ->group                ("group_one" , 10 , 3)
+
+  # state is zero, next state will be one
+  ->box                  ("enabled"  , "count"   , "K1=on"              , "group_zero" )
+  ->box                  ("enabled"  , "count"   , "K2=off"             , "group_zero" )
+  ->box                  ("enabled"  , "count"   , "group_one=ENABLE"   , "group_zero" )
+
+  # state is three, next state will be zero
+  ->box                  ("disabled" , "count"   , "K1=off"             , "group_three")
+  ->box                  ("disabled" , "count"   , "K2=off"             , "group_three")
+  ->box                  ("disabled" , "count"   , "group_zero=ENABLE"  , "group_three")
+
+  # state is two, next state will be three
+  ->box                  ("disabled" , "count"   , "K1=on"              , "group_two"  )
+  ->box                  ("disabled" , "count"   , "K2=on"              , "group_two"  )
+  ->box                  ("disabled" , "count"   , "group_three=ENABLE" , "group_two"  )
+
+  # state is one, next state will be two
+  ->box                  ("disabled" , "count"   , "K1=off"             , "group_one"  )
+  ->box                  ("disabled" , "count"   , "K2=on"              , "group_one"  )
+  ->box                  ("disabled" , "count"   , "group_two=ENABLE"   , "group_one"  )
+;
+
+
+
+
+printf "flash configuration into modules? (yN) : ";
+my $answer = <STDIN>;
+
+if ($answer =~ m/^[jJyY]$/) {
+  connect();
+  flash_fast("bbb"  );
+  flash_fast("relay");
+  disconnect();
+}
+

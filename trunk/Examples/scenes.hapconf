@@ -1,0 +1,263 @@
+#!/usr/bin/env perl
+########################################################################################################################
+#
+# try fancy stuff...
+#
+########################################################################################################################
+#
+# the eval board has the following input switches
+#
+# led1    (2:on)       (4:on)       (6:on)
+# led2    1:2:off      3:4:off      5:6:off
+# led3    (1:on)       (3:on)       (5:on)
+# led4
+# led5
+# led6    (7:on)       (8:on)       (9:on)
+# led7     7:off        8:off        9:off
+# led8
+# led9
+# led10   10:on         11:on        12:on
+# led11   10:off        11:off       12:off
+# led12
+# led13
+#                       (13:on)
+#                        13:off
+#
+# modules:
+#  * button, back box13
+#  * relay, bistable, NO
+#  * RGB LED
+#  * IR RxTx
+#  * Ethernet
+#
+# 9 LED connected to 6 relay channels and 3 dimmer channels.
+#
+
+
+use HAPCONF;
+
+# create setup...
+HAPCONF->new("eval_board");
+
+#begin_log("TxCAN" , "RxCAN");
+
+
+
+##############################################################################
+# register and configure network nodes
+##############################################################################
+ethernet                 ("eth")
+  ->url                  ("192.168.0.100:1001")
+;
+
+button_back_box13        ("bbb")
+  ->id                   (6 , 8)
+                         # message name            event     port
+  ->port_name            ( "1=B1" )
+  ->port_name            ( "2=B2" )
+  ->port_name            ("13=B13")
+  ->message              ("next"                 , "B2 :c")
+  ->message              ("off"                  , "B1 :c")
+
+  ->message              ("all_off"              , "B13:c")
+
+  ->notes                ("configured by hapconf")
+
+
+  ->thermostat_threshold (22.0)
+  ->thermostat_hysteresis( 1.0)
+  ->temperature_offset   ( 0.0)
+;
+
+
+relay_bistable_NO        ("relay")
+  ->id                   (3 , 8)
+  ->port_name            ("1=K1" )
+  ->port_name            ("2=K2" )
+  ->port_name            ("3=K3" )
+  ->port_name            ("4=K4" )
+  ->port_name            ("5=K5" )
+  ->port_name            ("6=K6" )
+  ->message              ("R1_1" , "K1:is_on" )
+  ->message              ("R2_1" , "K2:is_on" )
+  ->message              ("R3_1" , "K3:is_on" )
+  ->message              ("R4_1" , "K4:is_on" )
+  ->message              ("R5_1" , "K5:is_on" )
+  ->message              ("R6_1" , "K6:is_on" )
+  ->message              ("R1_0" , "K1:is_off")
+  ->message              ("R2_0" , "K2:is_off")
+  ->message              ("R3_0" , "K3:is_off")
+  ->message              ("R4_0" , "K4:is_off")
+  ->message              ("R5_0" , "K5:is_off")
+  ->message              ("R6_0" , "K6:is_off")
+
+
+                         # state      command             port list             trigger message
+  # 3 scenes
+
+  # resolve cyclic dependency by pre-defining one group...
+  ->group                ("scene_zero" , 13 , 4)
+
+  # state is three, next state will be zero
+  ->box                  ("disabled" , "next"   , "K1=off"               , "scene_three")
+  ->box                  ("disabled" , "next"   , "K2=off"               , "scene_three")
+  ->box                  ("disabled" , "next"   , "scene_zero=ENABLE"    , "scene_three")
+  ->box                  ("disabled" , "next"   , "scene_three=DISABLE"  , "scene_three")
+
+  # state is two, next state will be three
+  ->box                  ("disabled" , "next"   , "K1=on"                , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "K2=on"                , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "scene_three=ENABLE"   , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "scene_two=DISABLE"    , "scene_two"  )
+
+  # state is one, next state will be two
+  ->box                  ("disabled" , "next"   , "K1=off"               , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "K2=on"                , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "scene_two=ENABLE"     , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "scene_one=DISABLE"    , "scene_one"  )
+
+  # state is zero, next state will be one
+  ->box                  ("enabled"  , "next"   , "K1=on"                , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "K2=off"               , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "scene_one=ENABLE"     , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "scene_zero=DISABLE"   , "scene_zero" )
+
+  # all_off, defined start...
+  ->box                  ("enabled"  , "all_off" , "K1,K2,K3,K4,K5,K6=off"  )
+  ->box                  ("enabled"  , "all_off" , "scene_zero =ENABLE"                 )
+  ->box                  ("enabled"  , "all_off" , "scene_one  =DISABLE"                )
+  ->box                  ("enabled"  , "all_off" , "scene_two  =DISABLE"                )
+  ->box                  ("enabled"  , "all_off" , "scene_three=DISABLE"                )
+
+
+  ->box                  ("enabled"  , "off"     , "K1,K2,K3,K4,K5,K6=off"              )
+  ->box                  ("enabled"  , "off"     , "scene_zero =ENABLE"                 )
+  ->box                  ("enabled"  , "off"     , "scene_one  =DISABLE"                )
+  ->box                  ("enabled"  , "off"     , "scene_two  =DISABLE"                )
+  ->box                  ("enabled"  , "off"     , "scene_three=DISABLE"                )
+;
+
+
+
+
+
+led_rgb                  ("dimmer"   )
+  ->id                   (4    , 8   )
+  ->port_name            ("R=L1")
+  ->port_name            ("G=L2")
+  ->port_name            ("B=L3")
+
+  ->message              ("L1_on" , "L1:is_on")
+  ->message              ("L1_off", "L1:is_off")
+
+  ->dimming_time         ("L1=2")
+  ->dimming_time         ("L2=2")
+  ->dimming_time         ("L3=2")
+  ->dimming_time         ("M =1")
+
+  ->powerup_value        ("L1=  0")
+  ->powerup_value        ("L2=  0")
+  ->powerup_value        ("L3=  0")
+  ->powerup_value        ("M =255")          # on, dimm commands should have immediate effect...
+
+  ->state_memory         ("L1=yes")
+  ->state_memory         ("L2=yes")
+  ->state_memory         ("L3=no" )
+  ->state_memory         ("M =no" )
+
+  ->min_value            ("L1=  5")
+  ->min_value            ("L2=  5")
+  ->min_value            ("L3=  0")
+  ->min_value            ("M =255")
+
+  ->max_value            ("L1=255")
+  ->max_value            ("L2=255")
+  ->max_value            ("L3=255")
+  ->max_value            ("M =255")
+
+  ->notes                ("configured by hapconf")
+  # resolve cyclic dependency by pre-defining one group...
+  ->group                ("scene_zero" , 14 , 4)
+
+  # state is three, next state will be zero
+  ->box                  ("disabled" , "next"   , "RGB~0,0,0"            , "scene_three")
+  ->box                  ("disabled" , "next"   , "scene_zero=ENABLE"    , "scene_three")
+  ->box                  ("disabled" , "next"   , "scene_three=DISABLE"  , "scene_three")
+
+  # state is two, next state will be three
+  ->box                  ("disabled" , "next"   , "L1~40"                , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "L2~40"                , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "L3~40"                , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "scene_three=ENABLE"   , "scene_two"  )
+  ->box                  ("disabled" , "next"   , "scene_two=DISABLE"    , "scene_two"  )
+
+  # state is one, next state will be two
+  ->box                  ("disabled" , "next"   , "L1~80"                , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "L2~40"                , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "L3~15"                , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "scene_two=ENABLE"     , "scene_one"  )
+  ->box                  ("disabled" , "next"   , "scene_one=DISABLE"    , "scene_one"  )
+
+  # state is zero, next state will be one
+  ->box                  ("enabled"  , "next"   , "L1~16"                , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "L2~40"                , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "L3~80"                , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "scene_one=ENABLE"     , "scene_zero" )
+  ->box                  ("enabled"  , "next"   , "scene_zero=DISABLE"   , "scene_zero" )
+
+  # all_off, defined start...
+  ->box                  ("enabled"  , "all_off" , "scene_zero =ENABLE"                 )
+  ->box                  ("enabled"  , "all_off" , "scene_one  =DISABLE"                )
+  ->box                  ("enabled"  , "all_off" , "scene_two  =DISABLE"                )
+  ->box                  ("enabled"  , "all_off" , "scene_three=DISABLE"                )
+  ->box                  ("enabled"  , "all_off" , "RGB~0,0,0"                          )
+
+
+  ->box                  ("enabled"  , "off"     , "RGB~0,0,0"                          )
+  ->box                  ("enabled"  , "off"     , "scene_zero =ENABLE"                 )
+  ->box                  ("enabled"  , "off"     , "scene_one  =DISABLE"                )
+  ->box                  ("enabled"  , "off"     , "scene_two  =DISABLE"                )
+  ->box                  ("enabled"  , "off"     , "scene_three=DISABLE"                )
+
+
+;
+
+
+
+
+#node("bbb")
+#  ->box                  ("enabled" , "R1"    , "1=on")
+#  ->box                  ("enabled" , "R7"    , "1=off")
+#  #
+#  # feedback for day/night...
+#  #                                   trigger      action    optional grouplist
+#  ->box                  ("enabled" , "day"      , "7=on" )
+#  ->box                  ("enabled" , "night"    , "7=off")
+#;
+
+
+## lets try ping-pong between relay and led module...
+## this really works!...
+#node("relay")
+#  ->box                  ("enabled" , "f2"               , "K1=on" ) # should trigger an K1_on  message...
+#  ->box                  ("enabled" , "L1_on"            , "K1=off") # should trigger an K1_off message...
+#  ->box                  ("enabled" , "L1_off"           , "K1=on" ) # should trigger an K1_on  message...
+#;
+#
+#node("dimmer")
+#  ->box                  ("enabled" , "K1_on"            , "L1=255") # should trigger an L1_on  message...
+#  ->box                  ("enabled" , "K1_off"           , "L1=0"  ) # should trigger an L1_off message...
+#;
+
+
+printf "flash configuration into modules? (yN) : ";
+my $answer = <STDIN>;
+
+if ($answer =~ m/^[jJyY]$/) {
+  connect();
+  #flash_fast("bbb"   );
+  #flash_fast("relay" );
+  flash_fast("dimmer");
+  disconnect();
+}
+
